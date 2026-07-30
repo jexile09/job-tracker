@@ -81,6 +81,10 @@ export default function JobTracker() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [viewingNote, setViewingNote] = useState<{ company: string; text: string } | null>(null);
 
+  // Search & Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState<string>('all');
+
   const [form, setForm] = useState<FormState>({
     company_name: '',
     application_link: '',
@@ -301,6 +305,36 @@ export default function JobTracker() {
     setMessage({ type: 'success', text: 'Application removed.' });
   };
 
+  // CSV Export Function
+  const handleExportCSV = () => {
+    if (jobs.length === 0) return;
+
+    const headers = ['Company Name', 'Applied Date', 'Status', 'Link', 'Notes'];
+    const rows = jobs.map((job) => [
+      `"${job.company_name.replace(/"/g, '""')}"`,
+      `"${job.applied_date}"`,
+      `"${job.status}"`,
+      `"${job.application_link || ''}"`,
+      `"${(job.notes || '').replace(/"/g, '""')}"`,
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `job_applications_${getTodayString()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Filter Logic
+  const filteredJobs = jobs.filter((job) => {
+    const matchesSearch = job.company_name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = selectedFilter === 'all' || job.status === selectedFilter;
+    return matchesSearch && matchesFilter;
+  });
+
   if (!session) {
     return (
       <section className="mx-auto flex max-w-2xl flex-col items-center justify-center rounded-[32px] border border-[#FFE5E2] bg-[#FFFDF9] p-10 text-center shadow-[0_20px_45px_rgba(255,183,178,0.16)]">
@@ -460,10 +494,47 @@ export default function JobTracker() {
       </section>
 
       <section className="rounded-[32px] border border-[#FFE5E2] bg-white p-5 shadow-[0_20px_45px_rgba(255,183,178,0.12)] sm:p-6">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-xl font-semibold text-[#4E3B3B]">Job Applications</h3>
             <p className="text-sm text-[#8D6F6F]">All saved applications and uploaded documents.</p>
+          </div>
+          {jobs.length > 0 && (
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              className="inline-flex items-center gap-2 self-start rounded-2xl border border-[#FFE5E2] bg-[#FFFDF9] px-4 py-2.5 text-xs font-semibold text-[#6C5656] transition hover:bg-[#FFE5E2]"
+            >
+              Export CSV 📥
+            </button>
+          )}
+        </div>
+
+        {/* Search & Filter Controls */}
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <input
+            type="text"
+            placeholder="Search company... 🔍"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full sm:w-64 rounded-2xl border border-[#FFE5E2] bg-[#FFFDF9] px-4 py-2 text-sm text-[#6C5656] outline-none transition focus:border-[#FFB7B2]"
+          />
+
+          <div className="flex flex-wrap gap-2 text-xs font-medium">
+            {['all', 'applied', 'interview', 'offered', 'rejected'].map((status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => setSelectedFilter(status)}
+                className={`rounded-xl px-3 py-1.5 capitalize transition ${
+                  selectedFilter === status
+                    ? 'bg-[#FFB7B2] text-white'
+                    : 'border border-[#FFE5E2] bg-[#FFFDF9] text-[#8D6F6F] hover:bg-[#FFE5E2]/50'
+                }`}
+              >
+                {status}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -471,9 +542,11 @@ export default function JobTracker() {
           <div className="rounded-2xl border border-[#FFE5E2] bg-[#FFFDF9] p-8 text-center text-sm text-[#8D6F6F]">
             Loading your list…
           </div>
-        ) : jobs.length === 0 ? (
+        ) : filteredJobs.length === 0 ? (
           <div className="rounded-2xl border border-[#FFE5E2] bg-[#FFFDF9] p-8 text-center text-sm text-[#8D6F6F]">
-            No applications yet. Add your first job above.
+            {jobs.length === 0
+              ? 'No applications yet. Add your first job above.'
+              : 'No matching applications found.'}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -489,7 +562,7 @@ export default function JobTracker() {
                 </tr>
               </thead>
               <tbody>
-                {jobs.map((job) => (
+                {filteredJobs.map((job) => (
                   <tr key={job.id} className="border-b border-[#F7EEE8] align-top">
                     <td className="px-3 py-3">
                       <div className="font-semibold text-[#4E3B3B]">{job.company_name}</div>
@@ -510,7 +583,6 @@ export default function JobTracker() {
                         {job.status}
                       </span>
                     </td>
-                    {/* Dedicated Notes Column with View Button */}
                     <td className="px-3 py-3">
                       {job.notes ? (
                         <button
@@ -581,7 +653,7 @@ export default function JobTracker() {
         )}
       </section>
 
-      {/* Pastel Notes Modal Popup */}
+      {/* Pastel Notes Modal */}
       {viewingNote ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-3xl border-2 border-[#FFE5E2] bg-[#FFFDF9] p-6 shadow-xl">
