@@ -81,6 +81,13 @@ export default function JobTracker() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [viewingNote, setViewingNote] = useState<{ company: string; text: string } | null>(null);
 
+  // Auth Form State
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authMessage, setAuthMessage] = useState<string | null>(null);
+
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
@@ -173,6 +180,36 @@ export default function JobTracker() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) return;
+
+    setAuthLoading(true);
+    setAuthMessage(null);
+
+    const client = supabase!;
+    if (isSignUp) {
+      const { error } = await client.auth.signUp({
+        email: authEmail,
+        password: authPassword,
+      });
+      if (error) {
+        setAuthMessage(error.message);
+      } else {
+        setAuthMessage('Check your email for the confirmation link! 💌');
+      }
+    } else {
+      const { error } = await client.auth.signInWithPassword({
+        email: authEmail,
+        password: authPassword,
+      });
+      if (error) {
+        setAuthMessage(error.message);
+      }
+    }
+    setAuthLoading(false);
+  };
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = event.target;
@@ -337,11 +374,64 @@ export default function JobTracker() {
 
   if (!session) {
     return (
-      <section className="mx-auto flex max-w-2xl flex-col items-center justify-center rounded-[32px] border border-[#FFE5E2] bg-[#FFFDF9] p-10 text-center shadow-[0_20px_45px_rgba(255,183,178,0.16)]">
-        <h2 className="text-3xl font-semibold text-[#4E3B3B]">Sign in to start tracking applications</h2>
-        <p className="mt-3 max-w-md text-sm text-[#8D6F6F]">
-          Once you’re signed in, this space will let you capture company details, attach documents, and review your pipeline.
+      <section className="mx-auto flex max-w-md flex-col items-center justify-center rounded-[32px] border border-[#FFE5E2] bg-[#FFFDF9] p-8 text-center shadow-[0_20px_45px_rgba(255,183,178,0.16)]">
+        <h2 className="text-2xl font-semibold text-[#4E3B3B]">
+          {isSignUp ? 'Create Account ✨' : 'Welcome Back 🌸'}
+        </h2>
+        <p className="mt-2 text-xs text-[#8D6F6F]">
+          {isSignUp ? 'Sign up to build your application pipeline' : 'Sign in to access your application journal'}
         </p>
+
+        <form onSubmit={handleAuth} className="mt-6 w-full space-y-3 text-left">
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-[#6C5656]">Email</label>
+            <input
+              type="email"
+              required
+              value={authEmail}
+              onChange={(e) => setAuthEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="w-full rounded-2xl border border-[#FFE5E2] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[#FFB7B2]"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-[#6C5656]">Password</label>
+            <input
+              type="password"
+              required
+              value={authPassword}
+              onChange={(e) => setAuthPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full rounded-2xl border border-[#FFE5E2] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[#FFB7B2]"
+            />
+          </div>
+
+          {authMessage && (
+            <div className="rounded-xl border border-[#FFE2E2] bg-[#FFF5F5] p-2.5 text-center text-xs text-[#A04A4A]">
+              {authMessage}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={authLoading}
+            className="w-full rounded-2xl bg-[#FFB7B2] py-3 text-sm font-semibold text-white transition hover:bg-[#FFA9A0] disabled:opacity-70"
+          >
+            {authLoading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
+          </button>
+        </form>
+
+        <button
+          type="button"
+          onClick={() => {
+            setIsSignUp(!isSignUp);
+            setAuthMessage(null);
+          }}
+          className="mt-4 text-xs text-[#D6A28C] underline decoration-[#FFD9D4] underline-offset-2 hover:text-[#4E3B3B]"
+        >
+          {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+        </button>
       </section>
     );
   }
@@ -505,7 +595,7 @@ export default function JobTracker() {
               onClick={handleExportCSV}
               className="inline-flex items-center gap-2 self-start rounded-2xl border border-[#FFE5E2] bg-[#FFFDF9] px-4 py-2.5 text-xs font-semibold text-[#6C5656] transition hover:bg-[#FFE5E2]"
             >
-              Export CSV 📥
+              Download Spreadsheet 🍓
             </button>
           )}
         </div>
@@ -514,7 +604,7 @@ export default function JobTracker() {
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <input
             type="text"
-            placeholder="Search company... 🔍"
+            placeholder="Search company... 🌸"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full sm:w-64 rounded-2xl border border-[#FFE5E2] bg-[#FFFDF9] px-4 py-2 text-sm text-[#6C5656] outline-none transition focus:border-[#FFB7B2]"
@@ -590,7 +680,7 @@ export default function JobTracker() {
                           onClick={() => setViewingNote({ company: job.company_name, text: job.notes! })}
                           className="rounded-full border border-[#FFE5E2] bg-[#FFFDF9] px-3 py-1 text-xs font-semibold text-[#6C5656] transition hover:bg-[#FFE5E2]"
                         >
-                          View notes 📝
+                          View notes 🧸
                         </button>
                       ) : (
                         <span className="text-xs text-[#B7A0A0]">No notes</span>
