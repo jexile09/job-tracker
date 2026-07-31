@@ -17,6 +17,13 @@ const statusStyles: Record<JobStatus, string> = {
   rejected: 'bg-[#FFE6EA] text-[#8C3A49]',
 };
 
+type CleanupRules = {
+  rejected: boolean;
+  olderThanOneWeek: boolean;
+  olderThanOneMonth: boolean;
+  olderThanThreeMonths: boolean;
+};
+
 export default function JobTracker() {
   const [session, setSession] = useState<AuthSession>(null);
   const [jobs, setJobs] = useState<JobRecord[]>([]);
@@ -27,6 +34,7 @@ export default function JobTracker() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [newPassword, setNewPassword] = useState('');
+  const [cleanupLoading, setCleanupLoading] = useState(false);
 
   const [form, setForm] = useState<FormState>({
     company_name: '',
@@ -78,6 +86,52 @@ export default function JobTracker() {
     if (!supabase || !session?.user?.id) return;
     await supabase.from('jobs').delete().eq('id', id);
     setJobs((prev) => prev.filter((j) => j.id !== id));
+  };
+
+  const handleRunCleanup = async (rules: CleanupRules) => {
+    if (!supabase || !session?.user?.id) return;
+
+    setCleanupLoading(true);
+    const today = new Date();
+    const oneWeekAgo = new Date(today);
+    oneWeekAgo.setDate(today.getDate() - 7);
+    const oneMonthAgo = new Date(today);
+    oneMonthAgo.setDate(today.getDate() - 30);
+    const threeMonthsAgo = new Date(today);
+    threeMonthsAgo.setDate(today.getDate() - 90);
+
+    const matchingJobs = jobs.filter((job) => {
+      if (job.is_archived) return false;
+      const appliedDate = new Date(`${job.applied_date}T00:00:00`);
+      const matchesRejected = rules.rejected && job.status === 'rejected';
+      const matchesOneWeek = rules.olderThanOneWeek && appliedDate < oneWeekAgo;
+      const matchesOneMonth = rules.olderThanOneMonth && appliedDate < oneMonthAgo;
+      const matchesThreeMonths = rules.olderThanThreeMonths && appliedDate < threeMonthsAgo;
+      return matchesRejected || matchesOneWeek || matchesOneMonth || matchesThreeMonths;
+    });
+
+    if (matchingJobs.length === 0) {
+      setMessage({ type: 'success', text: 'No applications matched the selected cleanup rules.' });
+      setCleanupLoading(false);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('jobs')
+      .update({ is_archived: true })
+      .in('id', matchingJobs.map((job) => job.id))
+      .eq('user_id', session.user.id);
+
+    if (error) {
+      setMessage({ type: 'error', text: error.message });
+      setCleanupLoading(false);
+      return;
+    }
+
+    const toArchiveIds = new Set(matchingJobs.map((job) => job.id));
+    setJobs((prev) => prev.map((job) => (toArchiveIds.has(job.id) ? { ...job, is_archived: true } : job)));
+    setMessage({ type: 'success', text: `Archived ${matchingJobs.length} application(s).` });
+    setCleanupLoading(false);
   };
 
   const filteredJobs = jobs.filter((j) => {
@@ -158,6 +212,9 @@ export default function JobTracker() {
               filteredJobs={filteredJobs}
               statusStyles={statusStyles}
               handleToggleArchive={handleToggleArchive}
+              jobs={jobs}
+              onRunCleanup={handleRunCleanup}
+              cleanupLoading={cleanupLoading}
             />
           )}
           {activeTab === 'calendar' && <CalendarTab theme={theme} jobs={jobs} makeGoogleCalendarUrl={makeGoogleCalendarUrl} />}
