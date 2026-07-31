@@ -44,6 +44,9 @@ export default function JobTracker() {
     applied_date: getTodayString(),
     interview_date: '',
     deadline_date: '',
+    salary_range: '',
+    work_type: 'remote',
+    location: '',
   });
 
   const fetchJobs = async (userId: string) => {

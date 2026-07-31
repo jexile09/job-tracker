@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import type { JobRecord, JobStatus, FormState } from '../../types';
+import type { JobRecord, JobStatus, FormState, WorkType } from '../../types';
 
 type DashboardTabProps = {
   theme: any;
@@ -23,6 +22,12 @@ type DashboardTabProps = {
   handleDelete: (id: number) => void;
 };
 
+const workTypeBadges: Record<WorkType, { label: string; style: string }> = {
+  remote: { label: '🏠 Remote', style: 'bg-[#E8F8EC] text-[#3B6D3D]' },
+  hybrid: { label: '🪟 Hybrid', style: 'bg-[#FFF3CF] text-[#8C6418]' },
+  onsite: { label: '🏢 Onsite', style: 'bg-[#EAF4FF] text-[#3B629B]' },
+};
+
 export default function DashboardTab({
   theme,
   form,
@@ -42,45 +47,12 @@ export default function DashboardTab({
   handleToggleArchive,
   handleDelete,
 }: DashboardTabProps) {
-  const [pendingCalendarLink, setPendingCalendarLink] = useState<string | null>(null);
-
-  const handleCalendarLinkClick = (url: string) => {
-    setPendingCalendarLink(url);
-  };
-
-  const confirmCalendarOpen = () => {
-    if (!pendingCalendarLink) return;
-    window.open(pendingCalendarLink, '_blank', 'noopener,noreferrer');
-    setPendingCalendarLink(null);
-  };
-
-  const handleExportCSV = () => {
-    if (filteredJobs.length === 0) return;
-
-    const headers = ['Company Name', 'Applied Date', 'Status', 'Interview Date', 'Notes'];
-    const rows = filteredJobs.map((job) => [
-      `"${(job.company_name || '').replace(/"/g, '""')}"`,
-      `"${job.applied_date}"`,
-      `"${job.status}"`,
-      `"${job.interview_date || ''}"`,
-      `"${(job.notes || '').replace(/"/g, '""')}"`,
-    ]);
-
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `job-applications-${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   return (
     <>
       <section className={`rounded-[32px] border p-6 shadow-md sm:p-8 ${theme.card}`}>
         <h2 className="text-3xl font-semibold">Add New Application 🌸</h2>
         <form onSubmit={handleSubmit} className="mt-6 grid gap-4 lg:grid-cols-2">
+          {/* Left Side: General Info */}
           <div className={`space-y-4 rounded-[28px] border p-5 ${theme.innerCard}`}>
             <div>
               <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Company name</label>
@@ -89,6 +61,7 @@ export default function DashboardTab({
                 value={form.company_name}
                 onChange={handleInputChange}
                 required
+                placeholder="e.g. Google, Target, Local Studio"
                 className={`w-full rounded-2xl border px-4 py-2.5 text-sm outline-none ${theme.input}`}
               />
             </div>
@@ -98,23 +71,51 @@ export default function DashboardTab({
                 name="application_link"
                 value={form.application_link}
                 onChange={handleInputChange}
+                placeholder="https://..."
                 className={`w-full rounded-2xl border px-4 py-2.5 text-sm outline-none ${theme.input}`}
               />
             </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Salary / Pay Range 💰</label>
+                <input
+                  name="salary_range"
+                  value={form.salary_range}
+                  onChange={handleInputChange}
+                  placeholder="e.g. $70k - $85k / yr"
+                  className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
+                />
+              </div>
+
+              <div>
+                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Location 📍</label>
+                <input
+                  name="location"
+                  value={form.location}
+                  onChange={handleInputChange}
+                  placeholder="e.g. New York, Remote, NY"
+                  className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
+                />
+              </div>
+            </div>
+
             <div>
               <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Notes</label>
               <textarea
                 name="notes"
                 value={form.notes}
                 onChange={handleInputChange}
-                rows={3}
+                rows={2}
+                placeholder="Recruiter details, tech stack, team info..."
                 className={`w-full rounded-2xl border px-4 py-2.5 text-sm outline-none ${theme.input}`}
               />
             </div>
           </div>
 
+          {/* Right Side: Status, Dates, Files */}
           <div className={`space-y-4 rounded-[28px] border p-5 ${theme.innerCard}`}>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Status</label>
                 <select
@@ -129,6 +130,23 @@ export default function DashboardTab({
                   <option value="rejected">Rejected</option>
                 </select>
               </div>
+
+              <div>
+                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Work Type 💻</label>
+                <select
+                  name="work_type"
+                  value={form.work_type}
+                  onChange={handleInputChange}
+                  className={`w-full rounded-xl border px-2 py-2 text-xs outline-none ${theme.input}`}
+                >
+                  <option value="remote">Remote</option>
+                  <option value="hybrid">Hybrid</option>
+                  <option value="onsite">Onsite</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Applied Date</label>
                 <input
@@ -139,6 +157,7 @@ export default function DashboardTab({
                   className={`w-full rounded-xl border px-2 py-2 text-xs outline-none ${theme.input}`}
                 />
               </div>
+
               <div>
                 <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Deadline</label>
                 <input
@@ -163,7 +182,13 @@ export default function DashboardTab({
             </div>
 
             {message && (
-              <div className={`rounded-2xl border px-4 py-2 text-xs ${message.type === 'success' ? 'border-[#DDF3E3] bg-[#F3FFF7] text-[#3F6B4C]' : 'border-[#FFE2E2] bg-[#FFF5F5] text-[#A04A4A]'}`}>
+              <div
+                className={`rounded-2xl border px-4 py-2 text-xs ${
+                  message.type === 'success'
+                    ? 'border-[#DDF3E3] bg-[#F3FFF7] text-[#3F6B4C]'
+                    : 'border-[#FFE2E2] bg-[#FFF5F5] text-[#A04A4A]'
+                }`}
+              >
                 {message.text}
               </div>
             )}
@@ -179,7 +204,7 @@ export default function DashboardTab({
         </form>
       </section>
 
-      {/* ACTIVE APPLICATIONS LIST */}
+      {/* APPLICATIONS TABLE */}
       <section className={`rounded-[32px] border p-6 shadow-md ${theme.card}`}>
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <input
@@ -189,13 +214,6 @@ export default function DashboardTab({
             onChange={(e) => setSearchQuery(e.target.value)}
             className={`w-full sm:w-64 rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
           />
-          <button
-            type="button"
-            onClick={handleExportCSV}
-            className="rounded-2xl border border-[#FFE5E2] bg-[#FFFDF9] px-4 py-2 text-sm font-semibold text-[#6C5656] transition hover:bg-[#FFE5E2]"
-          >
-            Export CSV 📄
-          </button>
         </div>
 
         <div className="overflow-x-auto">
@@ -203,6 +221,7 @@ export default function DashboardTab({
             <thead>
               <tr className={`border-b ${theme.tableHeader}`}>
                 <th className="px-3 py-3">Company</th>
+                <th className="px-3 py-3">Details</th>
                 <th className="px-3 py-3">Applied</th>
                 <th className="px-3 py-3">Status</th>
                 <th className="px-3 py-3">Calendar</th>
@@ -210,67 +229,86 @@ export default function DashboardTab({
               </tr>
             </thead>
             <tbody>
-              {filteredJobs.map((job) => (
-                <tr key={job.id} className={`border-b ${theme.tableRow}`}>
-                  <td className="px-3 py-3 font-semibold">{job.company_name}</td>
-                  <td className="px-3 py-3 opacity-80">{formatAppliedDate(job.applied_date)}</td>
-                  <td className="px-3 py-3">
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[job.status]}`}>
-                      {job.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3">
-                    {job.interview_date && (
-                      <button
-                        type="button"
-                        onClick={() => handleCalendarLinkClick(makeGoogleCalendarUrl(`Interview: ${job.company_name}`, job.interview_date!.substring(0, 10), ''))}
-                        className="rounded-xl bg-[#EAF4FF] px-2.5 py-1 text-xs font-semibold text-[#3B629B]"
-                      >
-                        + Google Cal
-                      </button>
-                    )}
-                  </td>
-                  <td className="px-3 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleArchive(job.id, true)}
-                        className={`rounded-xl border px-2 py-1 text-xs font-semibold ${theme.input}`}
-                      >
-                        Archive 📦
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(job.id)}
-                        className="rounded-xl border border-[#FFD9D4] bg-[#FFF5F5] px-2 py-1 text-xs font-semibold text-[#A95565]"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {filteredJobs.map((job) => {
+                const workBadge = workTypeBadges[job.work_type || 'remote'];
+                return (
+                  <tr key={job.id} className={`border-b ${theme.tableRow}`}>
+                    <td className="px-3 py-3">
+                      <div className="font-semibold">{job.company_name}</div>
+                      {job.application_link && (
+                        <a
+                          href={job.application_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-[#E07A5F] underline"
+                        >
+                          View posting
+                        </a>
+                      )}
+                    </td>
+
+                    <td className="px-3 py-3">
+                      <div className="flex flex-col gap-1 text-xs">
+                        {job.salary_range && <span className="font-semibold text-[#8C6418]">💰 {job.salary_range}</span>}
+                        <div className="flex items-center gap-1.5">
+                          <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${workBadge.style}`}>
+                            {workBadge.label}
+                          </span>
+                          {job.location && <span className="opacity-70">📍 {job.location}</span>}
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="px-3 py-3 opacity-80">{formatAppliedDate(job.applied_date)}</td>
+
+                    <td className="px-3 py-3">
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[job.status]}`}>
+                        {job.status}
+                      </span>
+                    </td>
+
+                    <td className="px-3 py-3">
+                      {job.interview_date && (
+                        <a
+                          href={makeGoogleCalendarUrl(
+                            `Interview: ${job.company_name}`,
+                            job.interview_date.substring(0, 10),
+                            ''
+                          )}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-xl bg-[#EAF4FF] px-2.5 py-1 text-xs font-semibold text-[#3B629B]"
+                        >
+                          + Google Cal
+                        </a>
+                      )}
+                    </td>
+
+                    <td className="px-3 py-3">
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleArchive(job.id, true)}
+                          className={`rounded-xl border px-2 py-1 text-xs font-semibold ${theme.input}`}
+                        >
+                          Archive 📦
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(job.id)}
+                          className="rounded-xl border border-[#FFD9D4] bg-[#FFF5F5] px-2 py-1 text-xs font-semibold text-[#A95565]"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </section>
-
-      {pendingCalendarLink ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-[28px] border border-[#FFE5E2] bg-[#FFFDF9] p-6 shadow-xl">
-            <h4 className="text-lg font-semibold text-[#4E3B3B]">Open Google Calendar?</h4>
-            <p className="mt-2 text-sm text-[#6C5656]">This will open Google Calendar in a new tab. Allow it?</p>
-            <div className="mt-5 flex gap-3">
-              <button type="button" onClick={() => setPendingCalendarLink(null)} className="flex-1 rounded-2xl border border-[#FFE5E2] bg-white px-3 py-2 text-sm font-semibold text-[#6C5656]">
-                Cancel
-              </button>
-              <button type="button" onClick={confirmCalendarOpen} className="flex-1 rounded-2xl bg-[#FFB7B2] px-3 py-2 text-sm font-semibold text-white">
-                Open
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </>
   );
 }
