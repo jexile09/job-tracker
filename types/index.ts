@@ -4,6 +4,7 @@ export type ActiveTab = 'dashboard' | 'archive' | 'calendar' | 'settings';
 export type AuthSession = {
   user?: {
     id?: string;
+    email?: string | null;
     [key: string]: unknown;
   } | null;
   [key: string]: unknown;

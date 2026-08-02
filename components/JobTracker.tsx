@@ -8,7 +8,59 @@ import SettingsTab from './tabs/SettingsTab';
 
 const getTodayString = () => new Date().toISOString().split('T')[0];
 const formatAppliedDate = (v: string) => new Date(`${v}T00:00:00`).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' });
-const makeGoogleCalendarUrl = (t: string, d: string, det: string) => `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t)}&dates=${d.replace(/-/g, '')}/${d.replace(/-/g, '')}&details=${encodeURIComponent(det)}`;
+const makeGoogleCalendarUrl = (t: string, d: string, det: string, loc: string = '') => {
+  const encodeValue = (value: string) => encodeURIComponent(value || '');
+
+  const buildDateValue = (value: string | Date) => {
+    if (value instanceof Date) {
+      const yyyy = value.getFullYear().toString();
+      const mm = String(value.getMonth() + 1).padStart(2, '0');
+      const dd = String(value.getDate()).padStart(2, '0');
+      const hh = String(value.getHours()).padStart(2, '0');
+      const mi = String(value.getMinutes()).padStart(2, '0');
+      const ss = String(value.getSeconds()).padStart(2, '0');
+      return `${yyyy}${mm}${dd}T${hh}${mi}${ss}`;
+    }
+
+    const trimmed = value?.trim() || '';
+    if (!trimmed) return '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed.replace(/-/g, '');
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/.test(trimmed)) {
+      const [datePart, timePart = '00:00:00'] = trimmed.split('T');
+      const [hours = '00', minutes = '00', seconds = '00'] = timePart.split(':');
+      return `${datePart.replace(/-/g, '')}T${hours.padStart(2, '0')}${minutes.padStart(2, '0')}${seconds.padStart(2, '0')}`;
+    }
+
+    const parsed = new Date(trimmed);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return buildDateValue(parsed);
+  };
+
+  const startValue = buildDateValue(d);
+  if (!startValue) {
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeValue(t)}&details=${encodeValue(det)}&location=${encodeValue(loc)}`;
+  }
+
+  const isDateOnly = /^\d{8}$/.test(startValue);
+  const endValue = isDateOnly
+    ? startValue
+    : (() => {
+        const parsedStart = new Date(d);
+        if (Number.isNaN(parsedStart.getTime())) return '';
+        return buildDateValue(new Date(parsedStart.getTime() + 60 * 60 * 1000));
+      })();
+
+  const dates = isDateOnly ? `${startValue}/${startValue}` : endValue ? `${startValue}/${endValue}` : startValue;
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: t,
+    details: det,
+    location: loc,
+  });
+
+  if (dates) params.set('dates', dates);
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+};
 
 const statusStyles: Record<JobStatus, string> = {
   applied: 'bg-[#EAF4FF] text-[#3B629B]',
@@ -35,6 +87,7 @@ export default function JobTracker() {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [newPassword, setNewPassword] = useState('');
   const [cleanupLoading, setCleanupLoading] = useState(false);
+  const [loadingSession, setLoadingSession] = useState(true);
 
   const [form, setForm] = useState<FormState>({
     company_name: '',
@@ -56,12 +109,28 @@ export default function JobTracker() {
   };
 
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase) {
+      setLoadingSession(false);
+      return;
+    }
+
+    const storedDarkMode = typeof window !== 'undefined' ? window.localStorage.getItem('job-tracker-dark-mode') : null;
+    if (storedDarkMode !== null) {
+      setDarkMode(storedDarkMode === 'true');
+    }
+
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s as AuthSession);
       if (s?.user?.id) fetchJobs(s.user.id);
+      setLoadingSession(false);
     });
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('job-tracker-dark-mode', darkMode ? 'true' : 'false');
+    }
+  }, [darkMode]);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -89,6 +158,12 @@ export default function JobTracker() {
     if (!supabase || !session?.user?.id) return;
     await supabase.from('jobs').delete().eq('id', id);
     setJobs((prev) => prev.filter((j) => j.id !== id));
+  };
+
+  const handleSignOut = async () => {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    setSession(null);
   };
 
   const handleRunCleanup = async (rules: CleanupRules) => {
@@ -153,12 +228,83 @@ export default function JobTracker() {
     tableRow: darkMode ? 'border-[#27272A]' : 'border-[#F7EEE8]',
   };
 
-  if (!session) return <div className="p-8 text-center">Please sign in to access your tracker.</div>;
+  const activeJobs = jobs.filter((job) => !job.is_archived);
+  const totalApplications = activeJobs.length;
+  const upcomingInterviews = activeJobs.filter((job) => {
+    if (!job.interview_date) return false;
+    const interviewDate = new Date(job.interview_date);
+    return interviewDate.getTime() > Date.now();
+  }).length;
+  const archivedCount = jobs.filter((job) => job.is_archived).length;
+  const statusCounts = {
+    applied: activeJobs.filter((job) => job.status === 'applied').length,
+    interview: activeJobs.filter((job) => job.status === 'interview').length,
+    offered: activeJobs.filter((job) => job.status === 'offered').length,
+    rejected: activeJobs.filter((job) => job.status === 'rejected').length,
+  };
+
+  if (loadingSession) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#FFFDF9] text-sm text-[#8D6F6F]">
+        Loading Appli-Log...
+      </div>
+    );
+  }
+
+  if (!session) return <div className="p-8 text-center">Please sign in to access Appli-Log.</div>;
 
   return (
     <div className={`min-h-screen p-4 sm:p-8 font-['Karla',sans-serif] transition-colors ${theme.bg}`}>
-      <div className="mx-auto max-w-6xl space-y-0">
-        <div className="relative z-10 flex flex-wrap gap-2 px-6">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <section className={`rounded-[32px] border p-6 shadow-md sm:p-8 ${theme.card}`}>
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.24em] text-[#E07A5F]">Welcome back</p>
+              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#4E3B3B]">
+                Appli-Log Dashboard
+              </h1>
+              <p className="mt-2 text-sm text-[#6C5656]">
+                Signed in as <span className="font-semibold">{session.user?.email ?? 'your account'}</span>
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
+                <p className="text-xs uppercase tracking-[0.3em] text-[#8D6F6F]">Open applications</p>
+                <p className="mt-3 text-3xl font-semibold">{totalApplications}</p>
+              </div>
+              <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
+                <p className="text-xs uppercase tracking-[0.3em] text-[#8D6F6F]">Upcoming interviews</p>
+                <p className="mt-3 text-3xl font-semibold">{upcomingInterviews}</p>
+              </div>
+              <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
+                <p className="text-xs uppercase tracking-[0.3em] text-[#8D6F6F]">Archived</p>
+                <p className="mt-3 text-3xl font-semibold">{archivedCount}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-4">
+            <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
+              <p className="text-xs uppercase tracking-[0.25em] text-[#8D6F6F]">Applied</p>
+              <p className="mt-2 text-xl font-semibold">{statusCounts.applied}</p>
+            </div>
+            <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
+              <p className="text-xs uppercase tracking-[0.25em] text-[#8D6F6F]">Interview</p>
+              <p className="mt-2 text-xl font-semibold">{statusCounts.interview}</p>
+            </div>
+            <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
+              <p className="text-xs uppercase tracking-[0.25em] text-[#8D6F6F]">Offered</p>
+              <p className="mt-2 text-xl font-semibold">{statusCounts.offered}</p>
+            </div>
+            <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
+              <p className="text-xs uppercase tracking-[0.25em] text-[#8D6F6F]">Rejected</p>
+              <p className="mt-2 text-xl font-semibold">{statusCounts.rejected}</p>
+            </div>
+          </div>
+        </section>
+
+        <div className="relative z-0 flex flex-wrap gap-2 px-6">
           {[
             { id: 'dashboard', label: '🌸 Dashboard' },
             { id: 'archive', label: '📦 Archive' },
@@ -229,6 +375,8 @@ export default function JobTracker() {
               newPassword={newPassword}
               setNewPassword={setNewPassword}
               handlePasswordChange={() => {}}
+              userEmail={session?.user?.email as string | null | undefined}
+              handleSignOut={handleSignOut}
             />
           )}
         </div>

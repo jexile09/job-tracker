@@ -6,7 +6,7 @@ import type { JobRecord } from '../../types';
 type CalendarTabProps = {
   theme: any;
   jobs: JobRecord[];
-  makeGoogleCalendarUrl: (t: string, d: string, det: string) => string;
+  makeGoogleCalendarUrl: (t: string, d: string, det: string, loc?: string) => string;
 };
 
 export default function CalendarTab({ theme, jobs, makeGoogleCalendarUrl }: CalendarTabProps) {
@@ -31,6 +31,16 @@ export default function CalendarTab({ theme, jobs, makeGoogleCalendarUrl }: Cale
             <h4 className="font-semibold text-[#FFB7B2]">Upcoming Interviews</h4>
             {jobs.filter((j) => j.interview_date).map((j) => {
               const interviewDate = j.interview_date;
+              const calendarDetails = [j.notes, j.application_link ? `Application: ${j.application_link}` : '']
+                .filter(Boolean)
+                .join('\n');
+              const calendarUrl = makeGoogleCalendarUrl(
+                `Interview: ${j.company_name}`,
+                interviewDate || '',
+                calendarDetails,
+                j.location || ''
+              );
+
               return (
                 <div key={j.id} className="mt-2 flex items-center justify-between border-b pb-2">
                   <div>
@@ -39,10 +49,10 @@ export default function CalendarTab({ theme, jobs, makeGoogleCalendarUrl }: Cale
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleCalendarLinkClick(makeGoogleCalendarUrl(`Interview: ${j.company_name}`, interviewDate?.substring(0, 10) || '', ''))}
+                    onClick={() => handleCalendarLinkClick(calendarUrl)}
                     className="rounded-xl bg-[#EAF4FF] px-2.5 py-1 text-xs font-semibold text-[#3B629B]"
                   >
-                    Open
+                    Add Event
                   </button>
                 </div>
               );
@@ -54,14 +64,14 @@ export default function CalendarTab({ theme, jobs, makeGoogleCalendarUrl }: Cale
       {pendingCalendarLink ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-[28px] border border-[#FFE5E2] bg-[#FFFDF9] p-6 shadow-xl">
-            <h4 className="text-lg font-semibold text-[#4E3B3B]">Open Google Calendar?</h4>
-            <p className="mt-2 text-sm text-[#6C5656]">This will open Google Calendar in a new tab. Allow it?</p>
+            <h4 className="text-lg font-semibold text-[#4E3B3B]">Add this interview to Google Calendar?</h4>
+            <p className="mt-2 text-sm text-[#6C5656]">This will open Google Calendar with the event details pre-filled. Allow it?</p>
             <div className="mt-5 flex gap-3">
               <button type="button" onClick={() => setPendingCalendarLink(null)} className="flex-1 rounded-2xl border border-[#FFE5E2] bg-white px-3 py-2 text-sm font-semibold text-[#6C5656]">
                 Cancel
               </button>
               <button type="button" onClick={confirmCalendarOpen} className="flex-1 rounded-2xl bg-[#FFB7B2] px-3 py-2 text-sm font-semibold text-white">
-                Open
+                Add Event
               </button>
             </div>
           </div>

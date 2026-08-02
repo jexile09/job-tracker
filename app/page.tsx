@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import Auth from '../components/Auth';
 import JobTracker from '../components/JobTracker';
 
 export default function Home() {
@@ -14,22 +15,27 @@ export default function Home() {
       return;
     }
 
+    let isMounted = true;
     const client = supabase;
 
-    // Get active session on load
-    client.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    // Listen for auth state changes
     const {
       data: { subscription },
     } = client.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+      if (isMounted) setSession(session);
     });
 
-    return () => subscription.unsubscribe();
+    const initAuth = async () => {
+      const { data: sessionData } = await client.auth.getSession();
+      if (isMounted) setSession(sessionData.session);
+      if (isMounted) setLoading(false);
+    };
+
+    initAuth();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   if (loading) {
@@ -38,6 +44,10 @@ export default function Home() {
         Loading dashboard...
       </div>
     );
+  }
+
+  if (!session) {
+    return <Auth />;
   }
 
   return (
