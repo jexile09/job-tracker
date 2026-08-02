@@ -108,7 +108,7 @@ export default function Auth() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: getAppRedirectUrl() },
+      options: { redirectTo: getAppRedirectUrl().replace(/\/+$/, '') + '/auth/callback' },
     });
 
     if (error) {
