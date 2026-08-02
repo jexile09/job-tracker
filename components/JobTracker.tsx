@@ -1,9 +1,11 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import type { JobRecord, JobStatus, ActiveTab, AuthSession, FormState } from '../types';
+import { formatSalary } from '../lib/salary';
 import DashboardTab from './tabs/DashboardTab';
 import ArchiveTab from './tabs/ArchiveTab';
 import CalendarTab from './tabs/CalendarTab';
+import SpreadsheetTab from './tabs/SpreadsheetTab';
 import SettingsTab from './tabs/SettingsTab';
 
 const getTodayString = () => new Date().toISOString().split('T')[0];
@@ -85,6 +87,11 @@ export default function JobTracker() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [showOnlyOpen, setShowOnlyOpen] = useState(false);
+  const [compactView, setCompactView] = useState(false);
+  const [hideDetailsByDefault, setHideDetailsByDefault] = useState(true);
+  const [showSalaryColumn, setShowSalaryColumn] = useState(true);
+  const [showLocationColumn, setShowLocationColumn] = useState(true);
   const [newPassword, setNewPassword] = useState('');
   const [cleanupLoading, setCleanupLoading] = useState(false);
   const [loadingSession, setLoadingSession] = useState(true);
@@ -98,8 +105,13 @@ export default function JobTracker() {
     interview_date: '',
     deadline_date: '',
     salary_range: '',
+    salary_value: '',
+    salary_unit: 'year',
     work_type: 'remote',
     location: '',
+    tech_stack: '',
+    resume_storage_path: '',
+    cover_letter_storage_path: '',
   });
 
   const fetchJobs = async (userId: string) => {
@@ -132,18 +144,99 @@ export default function JobTracker() {
     }
   }, [darkMode]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('job-tracker-show-only-open', String(showOnlyOpen));
+      window.localStorage.setItem('job-tracker-compact-view', String(compactView));
+      window.localStorage.setItem('job-tracker-hide-details', String(hideDetailsByDefault));
+      window.localStorage.setItem('job-tracker-show-salary-column', String(showSalaryColumn));
+      window.localStorage.setItem('job-tracker-show-location-column', String(showLocationColumn));
+    }
+  }, [showOnlyOpen, compactView, hideDetailsByDefault, showSalaryColumn, showLocationColumn]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedOnlyOpen = window.localStorage.getItem('job-tracker-show-only-open');
+      const storedCompact = window.localStorage.getItem('job-tracker-compact-view');
+      const storedHideDetails = window.localStorage.getItem('job-tracker-hide-details');
+      const storedShowSalary = window.localStorage.getItem('job-tracker-show-salary-column');
+      const storedShowLocation = window.localStorage.getItem('job-tracker-show-location-column');
+      if (storedOnlyOpen !== null) setShowOnlyOpen(storedOnlyOpen === 'true');
+      if (storedCompact !== null) setCompactView(storedCompact === 'true');
+      if (storedHideDetails !== null) setHideDetailsByDefault(storedHideDetails === 'true');
+      if (storedShowSalary !== null) setShowSalaryColumn(storedShowSalary === 'true');
+      if (storedShowLocation !== null) setShowLocationColumn(storedShowLocation === 'true');
+    }
+  }, []);
+
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>, type: 'resume' | 'cover_letter') => {
+    if (!supabase || !session?.user?.id) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const bucket = 'job-files';
+    const filePath = `applications/${session.user.id}/${Date.now()}_${file.name}`;
+    const { error } = await supabase.storage.from(bucket).upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true,
+    });
+
+    if (error) {
+      setMessage({ type: 'error', text: `Upload failed: ${error.message}` });
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      [type === 'resume' ? 'resume_storage_path' : 'cover_letter_storage_path']: filePath,
+    }));
+    setMessage({ type: 'success', text: `${type === 'resume' ? 'Resume' : 'Cover letter'} uploaded.` });
+  };
+
+  const handlePasswordChange = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!supabase || !session) return;
+    if (!newPassword) {
+      setMessage({ type: 'error', text: 'Enter a new password first.' });
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      setMessage({ type: 'error', text: error.message });
+    } else {
+      setMessage({ type: 'success', text: 'Password updated successfully.' });
+      setNewPassword('');
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!supabase || !session?.user?.id) return;
     setSubmitting(true);
-    const { error } = await supabase.from('jobs').insert({ user_id: session.user.id, ...form, is_archived: false });
+
+    const salaryValueNumber = form.salary_value ? Number(form.salary_value) : undefined;
+    const salaryUnit = form.salary_unit || 'year';
+    const salaryRange = salaryValueNumber ? formatSalary(salaryValueNumber, salaryUnit) : form.salary_range || '';
+
+    const payload = {
+      user_id: session.user.id,
+      ...form,
+      salary_range: salaryRange,
+      salary_value: salaryValueNumber ?? null,
+      salary_unit: salaryUnit,
+      is_archived: false,
+    };
+
+    const { error } = await supabase.from('jobs').insert(payload);
     if (!error) {
       setMessage({ type: 'success', text: 'Saved! 🌸' });
       fetchJobs(session.user.id);
+      setForm((prev) => ({ ...prev, salary_range: '', salary_value: '', salary_unit: 'year' }));
     }
     setSubmitting(false);
   };
@@ -213,19 +306,23 @@ export default function JobTracker() {
   };
 
   const filteredJobs = jobs.filter((j) => {
-    if (activeTab === 'dashboard' && j.is_archived) return false;
+    if (activeTab === 'dashboard') {
+      if (j.is_archived) return false;
+      if (showOnlyOpen && j.status === 'rejected') return false;
+      if (selectedFilter !== 'all' && j.status !== selectedFilter) return false;
+    }
     if (activeTab === 'archive' && !j.is_archived) return false;
     return j.company_name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   const theme = {
-    bg: darkMode ? 'bg-[#18181B] text-[#F4F4F5]' : 'bg-[#FAF8F5] text-[#4E3B3B]',
-    card: darkMode ? 'bg-[#27272A] border-[#3F3F46]' : 'bg-[#FFFDF9] border-[#FFE5E2]',
-    innerCard: darkMode ? 'bg-[#18181B] border-[#3F3F46] text-[#F4F4F5]' : 'bg-white border-[#FFE5E2] text-[#4E3B3B]',
-    input: darkMode ? 'bg-[#27272A] border-[#3F3F46] text-[#F4F4F5]' : 'bg-[#FFFDF9] border-[#FFE5E2] text-[#4E3B3B]',
-    label: darkMode ? 'text-[#D4D4D8]' : 'text-[#6C5656]',
-    tableHeader: darkMode ? 'border-[#3F3F46] text-[#A1A1AA]' : 'border-[#F2E7DE] text-[#8D6F6F]',
-    tableRow: darkMode ? 'border-[#27272A]' : 'border-[#F7EEE8]',
+    bg: darkMode ? 'bg-[#0F172A] text-[#E2E8F0]' : 'bg-[#FAF8F5] text-[#4E3B3B]',
+    card: darkMode ? 'bg-[#111827] border-[#334155]' : 'bg-[#FFFDF9] border-[#FFE5E2]',
+    innerCard: darkMode ? 'bg-[#0F172A] border-[#334155] text-[#E5E7EB]' : 'bg-white border-[#FFE5E2] text-[#4E3B3B]',
+    input: darkMode ? 'bg-[#111827] border-[#475569] text-[#E5E7EB]' : 'bg-[#FFFDF9] border-[#FFE5E2] text-[#4E3B3B]',
+    label: darkMode ? 'text-[#CBD5E1]' : 'text-[#6C5656]',
+    tableHeader: darkMode ? 'border-[#334155] text-[#94A3B8]' : 'border-[#F2E7DE] text-[#8D6F6F]',
+    tableRow: darkMode ? 'border-[#1F2937]' : 'border-[#F7EEE8]',
   };
 
   const activeJobs = jobs.filter((job) => !job.is_archived);
@@ -309,7 +406,7 @@ export default function JobTracker() {
             { id: 'dashboard', label: '🌸 Dashboard' },
             { id: 'archive', label: '📦 Archive' },
             { id: 'calendar', label: '🗓️ Calendar' },
-            { id: 'settings', label: '⚙️ Settings' },
+            { id: 'spreadsheet', label: '🧾 Spreadsheet' },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -333,52 +430,70 @@ export default function JobTracker() {
           })}
         </div>
 
-        <div className="relative z-0">
-          {activeTab === 'dashboard' && (
-            <DashboardTab
-              theme={theme}
-              form={form}
-              handleInputChange={handleInputChange}
-              handleFileChange={() => {}}
-              handleSubmit={handleSubmit}
-              submitting={submitting}
-              message={message}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              selectedFilter={selectedFilter}
-              setSelectedFilter={setSelectedFilter}
-              filteredJobs={filteredJobs}
-              formatAppliedDate={formatAppliedDate}
-              makeGoogleCalendarUrl={makeGoogleCalendarUrl}
-              statusStyles={statusStyles}
-              handleToggleArchive={handleToggleArchive}
-              handleDelete={handleDelete}
-            />
-          )}
-          {activeTab === 'archive' && (
-            <ArchiveTab
-              theme={theme}
-              filteredJobs={filteredJobs}
-              statusStyles={statusStyles}
-              handleToggleArchive={handleToggleArchive}
-              jobs={jobs}
-              onRunCleanup={handleRunCleanup}
-              cleanupLoading={cleanupLoading}
-            />
-          )}
-          {activeTab === 'calendar' && <CalendarTab theme={theme} jobs={jobs} makeGoogleCalendarUrl={makeGoogleCalendarUrl} />}
-          {activeTab === 'settings' && (
+        <div className="relative z-0 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div>
+            {activeTab === 'dashboard' && (
+              <DashboardTab
+                theme={theme}
+                form={form}
+                handleInputChange={handleInputChange}
+                handleFileChange={handleFileChange}
+                handleSubmit={handleSubmit}
+                submitting={submitting}
+                message={message}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                selectedFilter={selectedFilter}
+                setSelectedFilter={setSelectedFilter}
+                filteredJobs={filteredJobs}
+                formatAppliedDate={formatAppliedDate}
+                makeGoogleCalendarUrl={makeGoogleCalendarUrl}
+                statusStyles={statusStyles}
+                handleToggleArchive={handleToggleArchive}
+                handleDelete={handleDelete}
+                compactMode={compactView}
+                hideDetailsByDefault={hideDetailsByDefault}
+                showSalaryColumn={showSalaryColumn}
+                showLocationColumn={showLocationColumn}
+              />
+            )}
+            {activeTab === 'spreadsheet' && <SpreadsheetTab jobs={jobs} />}
+            {activeTab === 'archive' && (
+              <ArchiveTab
+                theme={theme}
+                darkMode={darkMode}
+                filteredJobs={filteredJobs}
+                statusStyles={statusStyles}
+                handleToggleArchive={handleToggleArchive}
+                jobs={jobs}
+                onRunCleanup={handleRunCleanup}
+                cleanupLoading={cleanupLoading}
+              />
+            )}
+            {activeTab === 'calendar' && <CalendarTab theme={theme} jobs={jobs} makeGoogleCalendarUrl={makeGoogleCalendarUrl} />}
+          </div>
+          <div className={`sticky top-6 ${theme.card} rounded-[32px] border p-6 shadow-md`}> 
             <SettingsTab
               theme={theme}
               darkMode={darkMode}
               setDarkMode={setDarkMode}
               newPassword={newPassword}
               setNewPassword={setNewPassword}
-              handlePasswordChange={() => {}}
+              handlePasswordChange={handlePasswordChange}
               userEmail={session?.user?.email as string | null | undefined}
               handleSignOut={handleSignOut}
+              showOnlyOpen={showOnlyOpen}
+              setShowOnlyOpen={setShowOnlyOpen}
+              compactView={compactView}
+              setCompactView={setCompactView}
+              hideDetailsByDefault={hideDetailsByDefault}
+              setHideDetailsByDefault={setHideDetailsByDefault}
+              showSalaryColumn={showSalaryColumn}
+              setShowSalaryColumn={setShowSalaryColumn}
+              showLocationColumn={showLocationColumn}
+              setShowLocationColumn={setShowLocationColumn}
             />
-          )}
+          </div>
         </div>
       </div>
     </div>

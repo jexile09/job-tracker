@@ -1,6 +1,6 @@
 export type WorkType = 'remote' | 'hybrid' | 'onsite';
 export type JobStatus = 'applied' | 'interview' | 'offered' | 'rejected';
-export type ActiveTab = 'dashboard' | 'archive' | 'calendar' | 'settings';
+export type ActiveTab = 'dashboard' | 'archive' | 'calendar' | 'settings' | 'spreadsheet';
 export type AuthSession = {
   user?: {
     id?: string;
@@ -21,11 +21,13 @@ export type JobRecord = {
   interview_date?: string | null;
   deadline_date?: string | null;
   is_archived?: boolean | null;
-  
-  // 🌟 New Fields Added Here
+
   salary_range?: string | null;
+  salary_value?: number | null;
+  salary_unit?: 'year' | 'hour' | null;
   work_type?: WorkType | null;
   location?: string | null;
+  tech_stack?: string | null;
 
   resume_storage_path: string | null;
   cover_letter_storage_path: string | null;
@@ -42,12 +44,12 @@ export type FormState = {
   applied_date: string;
   interview_date: string;
   deadline_date: string;
-  
-  // 🌟 New Form Fields
   salary_range: string;
+  salary_value?: string;
+  salary_unit?: 'year' | 'month' | 'hour';
   work_type: WorkType;
   location: string;
-  // UI-only fields (not persisted directly to DB)
-  salary_value?: string;
-  salary_unit?: 'year' | 'hour' | 'month';
+  tech_stack?: string;
+  resume_storage_path?: string;
+  cover_letter_storage_path?: string;
 };
