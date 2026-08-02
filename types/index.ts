@@ -47,4 +47,7 @@ export type FormState = {
   salary_range: string;
   work_type: WorkType;
   location: string;
+  // UI-only fields (not persisted directly to DB)
+  salary_value?: string;
+  salary_unit?: 'year' | 'hour' | 'month';
 };
