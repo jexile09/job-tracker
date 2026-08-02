@@ -9,8 +9,8 @@ const karla = Karla({
 });
 
 export const metadata: Metadata = {
-  title: "Job Tracker",
-  description: "A pastel job application tracker",
+  title: "Appli-Log",
+  description: "A pastel job application tracker for managing applications",
 };
 
 export default function RootLayout({

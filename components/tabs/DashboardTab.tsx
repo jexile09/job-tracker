@@ -16,7 +16,7 @@ type DashboardTabProps = {
   setSelectedFilter: (f: string) => void;
   filteredJobs: JobRecord[];
   formatAppliedDate: (d: string) => string;
-  makeGoogleCalendarUrl: (t: string, d: string, det: string) => string;
+  makeGoogleCalendarUrl: (t: string, d: string, det: string, loc?: string) => string;
   statusStyles: Record<JobStatus, string>;
   handleToggleArchive: (id: number, state: boolean) => void;
   handleDelete: (id: number) => void;
@@ -231,6 +231,16 @@ export default function DashboardTab({
             <tbody>
               {filteredJobs.map((job) => {
                 const workBadge = workTypeBadges[job.work_type || 'remote'];
+                const calendarDetails = [job.notes, job.application_link ? `Application: ${job.application_link}` : '']
+                  .filter(Boolean)
+                  .join('\n');
+                const calendarUrl = makeGoogleCalendarUrl(
+                  `Interview: ${job.company_name}`,
+                  job.interview_date || '',
+                  calendarDetails,
+                  job.location || ''
+                );
+
                 return (
                   <tr key={job.id} className={`border-b ${theme.tableRow}`}>
                     <td className="px-3 py-3">
@@ -270,16 +280,12 @@ export default function DashboardTab({
                     <td className="px-3 py-3">
                       {job.interview_date && (
                         <a
-                          href={makeGoogleCalendarUrl(
-                            `Interview: ${job.company_name}`,
-                            job.interview_date.substring(0, 10),
-                            ''
-                          )}
+                          href={calendarUrl}
                           target="_blank"
                           rel="noreferrer"
                           className="rounded-xl bg-[#EAF4FF] px-2.5 py-1 text-xs font-semibold text-[#3B629B]"
                         >
-                          + Google Cal
+                          ＋ Add Event
                         </a>
                       )}
                     </td>
