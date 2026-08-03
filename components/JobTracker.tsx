@@ -450,6 +450,7 @@ export default function JobTracker() {
             { id: 'archive', label: '📦 Archive' },
             { id: 'calendar', label: '🗓️ Calendar' },
             { id: 'spreadsheet', label: '🧾 Spreadsheet' },
+            { id: 'settings', label: '⚙️ Settings' },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -473,52 +474,50 @@ export default function JobTracker() {
           })}
         </div>
 
-        <div className="relative z-0 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div>
-            {activeTab === 'dashboard' && (
-              <DashboardTab
-                theme={theme}
-                form={form}
-                handleInputChange={handleInputChange}
-                handleFileChange={handleFileChange}
-                handleSubmit={handleSubmit}
-                submitting={submitting}
-                message={message}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                selectedFilter={selectedFilter}
-                setSelectedFilter={setSelectedFilter}
-                filteredJobs={filteredJobs}
-                formatAppliedDate={formatAppliedDate}
-                makeGoogleCalendarUrl={makeGoogleCalendarUrl}
-                statusStyles={statusStyles}
-                handleToggleArchive={handleToggleArchive}
-                handleDelete={handleDelete}
-                compactMode={compactView}
-                hideDetailsByDefault={hideDetailsByDefault}
-                showSalaryColumn={showSalaryColumn}
-                showLocationColumn={showLocationColumn}
-                editingJobId={editingJobId}
-                onEdit={loadJobIntoForm}
-                onCancelEdit={resetForm}
-              />
-            )}
-            {activeTab === 'spreadsheet' && <SpreadsheetTab jobs={jobs} theme={theme} darkMode={darkMode} />}
-            {activeTab === 'archive' && (
-              <ArchiveTab
-                theme={theme}
-                darkMode={darkMode}
-                filteredJobs={filteredJobs}
-                statusStyles={statusStyles}
-                handleToggleArchive={handleToggleArchive}
-                jobs={jobs}
-                onRunCleanup={handleRunCleanup}
-                cleanupLoading={cleanupLoading}
-              />
-            )}
-            {activeTab === 'calendar' && <CalendarTab theme={theme} jobs={jobs} makeGoogleCalendarUrl={makeGoogleCalendarUrl} />}
-          </div>
-          <div className={`sticky top-6 ${theme.card} rounded-[32px] border p-6 shadow-md`}> 
+        <div className="relative z-0 grid gap-6">
+          {activeTab === 'dashboard' && (
+            <DashboardTab
+              theme={theme}
+              form={form}
+              handleInputChange={handleInputChange}
+              handleFileChange={handleFileChange}
+              handleSubmit={handleSubmit}
+              submitting={submitting}
+              message={message}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              selectedFilter={selectedFilter}
+              setSelectedFilter={setSelectedFilter}
+              filteredJobs={filteredJobs}
+              formatAppliedDate={formatAppliedDate}
+              makeGoogleCalendarUrl={makeGoogleCalendarUrl}
+              statusStyles={statusStyles}
+              handleToggleArchive={handleToggleArchive}
+              handleDelete={handleDelete}
+              compactMode={compactView}
+              hideDetailsByDefault={hideDetailsByDefault}
+              showSalaryColumn={showSalaryColumn}
+              showLocationColumn={showLocationColumn}
+              editingJobId={editingJobId}
+              onEdit={loadJobIntoForm}
+              onCancelEdit={resetForm}
+            />
+          )}
+          {activeTab === 'spreadsheet' && <SpreadsheetTab jobs={jobs} theme={theme} darkMode={darkMode} />}
+          {activeTab === 'archive' && (
+            <ArchiveTab
+              theme={theme}
+              darkMode={darkMode}
+              filteredJobs={filteredJobs}
+              statusStyles={statusStyles}
+              handleToggleArchive={handleToggleArchive}
+              jobs={jobs}
+              onRunCleanup={handleRunCleanup}
+              cleanupLoading={cleanupLoading}
+            />
+          )}
+          {activeTab === 'calendar' && <CalendarTab theme={theme} jobs={jobs} makeGoogleCalendarUrl={makeGoogleCalendarUrl} />}
+          {activeTab === 'settings' && (
             <SettingsTab
               theme={theme}
               darkMode={darkMode}
@@ -541,7 +540,7 @@ export default function JobTracker() {
               defaultSalaryUnit={defaultSalaryUnit}
               setDefaultSalaryUnit={setDefaultSalaryUnit}
             />
-          </div>
+          )}
         </div>
       </div>
     </div>
