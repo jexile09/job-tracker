@@ -27,7 +27,6 @@ export type JobRecord = {
   salary_unit?: 'year' | 'hour' | null;
   work_type?: WorkType | null;
   location?: string | null;
-  tech_stack?: string | null;
 
   resume_storage_path: string | null;
   cover_letter_storage_path: string | null;
@@ -49,7 +48,6 @@ export type FormState = {
   salary_unit?: 'year' | 'hour';
   work_type: WorkType;
   location: string;
-  tech_stack?: string;
   resume_storage_path?: string;
   cover_letter_storage_path?: string;
 };

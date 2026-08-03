@@ -175,24 +175,13 @@ export default function DashboardTab({
             </div>
 
             <div>
-              <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Tech stack</label>
-              <input
-                name="tech_stack"
-                value={form.tech_stack ?? ''}
-                onChange={handleInputChange}
-                placeholder="e.g. React, Node.js, Supabase"
-                className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
-              />
-            </div>
-
-            <div>
               <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Notes</label>
               <textarea
                 name="notes"
                 value={form.notes}
                 onChange={handleInputChange}
                 rows={2}
-                placeholder="Recruiter details, tech stack, team info..."
+                placeholder="Recruiter details, team info, next steps..."
                 className={`w-full rounded-2xl border px-4 py-2.5 text-sm outline-none ${theme.input}`}
               />
             </div>
@@ -457,7 +446,6 @@ export default function DashboardTab({
                             </div>
                             <div className="space-y-1 rounded-2xl border p-3">
                               <p className="text-[11px] uppercase tracking-[0.24em] text-[#8D6F6F]">Additional info</p>
-                              {job.tech_stack && <p className="text-xs">Tech stack: {job.tech_stack}</p>}
                               {job.notes && <p className="text-xs">Notes: {job.notes}</p>}
                               {job.application_link && (
                                 <a className="text-xs text-[#E07A5F] underline" href={job.application_link} target="_blank" rel="noreferrer">

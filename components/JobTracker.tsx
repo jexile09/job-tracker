@@ -111,7 +111,6 @@ export default function JobTracker() {
     salary_unit: salaryUnit,
     work_type: 'remote',
     location: '',
-    tech_stack: '',
     resume_storage_path: '',
     cover_letter_storage_path: '',
   });
@@ -195,7 +194,6 @@ export default function JobTracker() {
       salary_unit: job.salary_unit || 'year',
       work_type: job.work_type || 'remote',
       location: job.location || '',
-      tech_stack: job.tech_stack || '',
       resume_storage_path: job.resume_storage_path || '',
       cover_letter_storage_path: job.cover_letter_storage_path || '',
     });
