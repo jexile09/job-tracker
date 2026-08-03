@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import Image from 'next/image';
 import { supabase } from '../lib/supabaseClient';
 import type {
   JobRecord,
@@ -670,6 +671,13 @@ export default function JobTracker() {
         <section className={`rounded-[32px] border p-6 shadow-md sm:p-8 ${theme.card}`}>
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div>
+              <Image
+                src="/Appli-Log.ico"
+                alt="Appli-Log logo"
+                width={64}
+                height={64}
+                className="mb-3 h-14 w-14 rounded-full object-cover sm:h-16 sm:w-16"
+              />
               <p className="text-sm uppercase tracking-[0.24em] text-[#E07A5F]">Welcome back</p>
               <h1 className={`mt-2 text-3xl font-semibold tracking-tight ${darkMode ? 'text-[#E2E8F0]' : 'text-[#4E3B3B]'}`}>
                 Appli-Log Dashboard

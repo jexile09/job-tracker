@@ -11,6 +11,11 @@ const karla = Karla({
 export const metadata: Metadata = {
   title: "Appli-Log",
   description: "A pastel job application tracker for managing applications",
+  icons: {
+    icon: "/Appli-Log.ico",
+    shortcut: "/Appli-Log.ico",
+    apple: "/Appli-Log.ico",
+  },
 };
 
 export default function RootLayout({
