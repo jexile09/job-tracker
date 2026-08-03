@@ -43,7 +43,11 @@ export default function CalendarTab({
   const confirmCalendarOpen = () => {
     if (!pendingCalendarLink) return;
     // External navigation call (browser Window API invocation that opens a separate tab) sends a fully encoded template URL to Google Calendar for event prefill.
-    window.open(pendingCalendarLink, '_blank', 'noopener,noreferrer');
+    const popup = window.open(pendingCalendarLink, '_blank', 'noopener,noreferrer');
+    // Popup-blocker fallback (same-tab navigation when a new-tab request is denied by browser policy) guarantees the calendar link still opens.
+    if (!popup) {
+      window.location.assign(pendingCalendarLink);
+    }
     setPendingCalendarLink(null);
   };
 

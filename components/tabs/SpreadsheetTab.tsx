@@ -115,7 +115,7 @@ export default function SpreadsheetTab({
       </div>
 
       <div className="overflow-x-auto">
-        <table className={`min-w-full text-left ${darkMode ? 'text-[#E2E8F0]' : 'text-[#4E3B3B]'}`}>
+        <table className={`min-w-full text-left whitespace-nowrap ${darkMode ? 'text-[#E2E8F0]' : 'text-[#4E3B3B]'}`}>
           <thead>
             <tr className={`border-b ${theme.tableHeader}`}>
               <th className="px-3 py-2">Company</th>
@@ -130,12 +130,12 @@ export default function SpreadsheetTab({
           <tbody>
             {rows.map((job) => (
               <tr key={job.id} className={`border-b ${theme.tableRow}`}>
-                <td className="px-3 py-3 font-semibold">{job.company_name}</td>
+                <td className="px-3 py-3 font-semibold whitespace-nowrap">{job.company_name}</td>
                 <td className="px-3 py-3 text-xs uppercase tracking-[0.1em]">
                   <span className={`rounded-full px-2.5 py-1 font-semibold ${statusStyles[job.status]}`}>{job.status}</span>
                 </td>
-                <td className="px-3 py-3 text-xs text-[#6C5656]">{job.applied_date}</td>
-                <td className="px-3 py-3 text-xs text-[#6C5656]">
+                <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">{job.applied_date}</td>
+                <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">
                   <div>{formatInterviewDateTime(job.interview_date)}</div>
                   {job.interview_date ? (
                     <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${getWeekdayChipStyle(job.interview_date)}`}>
@@ -143,15 +143,15 @@ export default function SpreadsheetTab({
                     </span>
                   ) : null}
                 </td>
-                <td className="px-3 py-3 text-xs text-[#6C5656]">{job.salary_range || '—'}</td>
-                <td className="px-3 py-3 text-xs text-[#6C5656]">{job.location || '—'}</td>
-                <td className="px-3 py-3 text-xs text-[#6C5656] max-w-[280px]">
+                <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">{job.salary_range || '—'}</td>
+                <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">{job.location || '—'}</td>
+                <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap max-w-[320px]">
                   {job.interview_date ? (
                     <span className={`mb-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${getWeekdayChipStyle(job.interview_date)}`}>
                       {getWeekdayLabel(job.interview_date)}
                     </span>
                   ) : null}
-                  <p className="line-clamp-3">{job.notes || '—'}</p>
+                  <p className="truncate max-w-[320px]">{job.notes || '—'}</p>
                 </td>
               </tr>
             ))}

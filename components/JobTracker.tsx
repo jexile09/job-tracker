@@ -51,6 +51,12 @@ const inferSalaryUnitFromSalaryRange = (salaryRange: string | null | undefined):
   return 'salary';
 };
 
+const isMissingSalaryUnitColumnError = (message?: string) => {
+  if (!message) return false;
+  const normalized = message.toLowerCase();
+  return normalized.includes('salary_unit') && normalized.includes('schema cache');
+};
+
 const makeGoogleCalendarUrl = (t: string, d: string, det: string, loc: string = '') => {
   const encodeValue = (value: string) => encodeURIComponent(value || '');
 
@@ -409,9 +415,15 @@ export default function JobTracker() {
       is_archived: false,
     };
 
+    const { salary_unit: omittedSalaryUnit, ...payloadWithoutSalaryUnit } = payload;
+    void omittedSalaryUnit;
+
     if (editingJobId) {
       // Update query (database UPDATE mutation scoped by primary key) edits an existing job row while preserving unchanged columns in Postgres storage.
-      const { error } = await supabase.from('jobs').update(payload).eq('id', editingJobId);
+      let { error } = await supabase.from('jobs').update(payload).eq('id', editingJobId);
+      if (error && isMissingSalaryUnitColumnError(error.message)) {
+        ({ error } = await supabase.from('jobs').update(payloadWithoutSalaryUnit).eq('id', editingJobId));
+      }
       if (!error) {
         setMessage({ type: 'success', text: 'Updated! 🌸' });
         fetchJobs(session.user.id);
@@ -421,7 +433,10 @@ export default function JobTracker() {
       }
     } else {
       // Insert query (database INSERT mutation that appends a new row) creates a job record linked to the authenticated user for future RLS-scoped retrieval.
-      const { error } = await supabase.from('jobs').insert(payload);
+      let { error } = await supabase.from('jobs').insert(payload);
+      if (error && isMissingSalaryUnitColumnError(error.message)) {
+        ({ error } = await supabase.from('jobs').insert(payloadWithoutSalaryUnit));
+      }
       if (!error) {
         setMessage({ type: 'success', text: 'Saved! 🌸' });
         fetchJobs(session.user.id);
