@@ -20,6 +20,8 @@ import SettingsTab from './tabs/SettingsTab';
 
 const getTodayString = () => new Date().toISOString().split('T')[0];
 const DASHBOARD_PREFERENCES_KEY = 'job-tracker-dashboard-preferences-v1';
+const AUTH_PERSISTENCE_KEY = 'job-tracker-auth-persistence';
+const SESSION_ACTIVE_KEY = 'job-tracker-session-active';
 
 const isDashboardSortOption = (value: unknown): value is DashboardSortOption => {
   return (
@@ -264,6 +266,26 @@ export default function JobTracker() {
 
     // Authentication bootstrap (initial session retrieval from Supabase-managed authentication cookies) resolves user identity before protected database operations begin.
     supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
+      if (typeof window !== 'undefined') {
+        const authPersistence = window.localStorage.getItem(AUTH_PERSISTENCE_KEY);
+        const hasActiveBrowserSession = window.sessionStorage.getItem(SESSION_ACTIVE_KEY) === '1';
+
+        // Session-only auth gate (browser-session continuity check) signs users out after browser restarts when Remember Me is disabled.
+        if (authPersistence === 'session' && currentSession && !hasActiveBrowserSession) {
+          await supabase.auth.signOut();
+          setSession(null);
+          setLoadingSession(false);
+          setPreferencesHydrated(true);
+          return;
+        }
+
+        if (currentSession) {
+          window.sessionStorage.setItem(SESSION_ACTIVE_KEY, '1');
+        } else {
+          window.sessionStorage.removeItem(SESSION_ACTIVE_KEY);
+        }
+      }
+
       setSession(currentSession as AuthSession);
       if (currentSession?.user?.id) {
         // Parallel asynchronous operations (concurrent network requests executed with Promise.all) fetch transactional data and preference metadata in one latency window.
@@ -464,6 +486,10 @@ export default function JobTracker() {
   const handleSignOut = async () => {
     if (!supabase) return;
     await supabase.auth.signOut();
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(AUTH_PERSISTENCE_KEY);
+      window.sessionStorage.removeItem(SESSION_ACTIVE_KEY);
+    }
     setSession(null);
   };
 
@@ -639,8 +665,8 @@ export default function JobTracker() {
 
   // Component composition (parent orchestration layer that passes typed props into tab modules) enforces one-way data flow where container state becomes view-model input for presentation components.
   return (
-    <div className={`min-h-screen p-3 sm:p-8 font-['Karla',sans-serif] transition-colors ${theme.bg}`}>
-      <div className="mx-auto max-w-6xl space-y-6">
+    <div className={`min-h-screen overflow-x-hidden p-3 sm:p-8 font-['Karla',sans-serif] transition-colors ${theme.bg}`}>
+      <div className="mx-auto max-w-screen-xl space-y-6">
         <section className={`rounded-[32px] border p-6 shadow-md sm:p-8 ${theme.card}`}>
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div>

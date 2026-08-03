@@ -347,19 +347,19 @@ export default function DashboardTab({
               <option value="applied_asc">Applied: Oldest</option>
             </select>
           </div>
-          <div className="text-xs text-[#8D6F6F]">Tap or click a row to expand interview notes and details.</div>
+          <div className="hidden text-xs text-[#8D6F6F] lg:block">Tap or click a row to expand interview notes and details.</div>
         </div>
 
         <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-          <table className="min-w-[760px] text-left text-sm">
+          <table className="w-full min-w-[640px] lg:min-w-full text-left text-sm">
             <thead>
               <tr className={`border-b ${theme.tableHeader}`}>
                 <th className="px-3 py-3">Company</th>
-                {showSalaryColumn && <th className="px-3 py-3">Salary</th>}
-                {showLocationColumn && <th className="px-3 py-3">Location</th>}
+                {showSalaryColumn && <th className="hidden px-3 py-3 sm:table-cell">Salary</th>}
+                {showLocationColumn && <th className="hidden px-3 py-3 md:table-cell">Location</th>}
                 <th className="px-3 py-3">Applied</th>
                 <th className="px-3 py-3">Status</th>
-                <th className="px-3 py-3">Calendar</th>
+                <th className="hidden px-3 py-3 sm:table-cell">Calendar</th>
                 <th className="px-3 py-3">Actions</th>
               </tr>
             </thead>
@@ -399,18 +399,18 @@ export default function DashboardTab({
                         )}
                       </td>
                       {showSalaryColumn && (
-                        <td className="px-3 py-3 text-xs text-[#8C6418]">
+                        <td className="hidden px-3 py-3 text-xs text-[#8C6418] sm:table-cell">
                           {job.salary_range || formatSalary(job.salary_value, job.salary_unit, job.salary_currency)}
                         </td>
                       )}
-                      {showLocationColumn && <td className="px-3 py-3 text-xs opacity-80">{job.location || '—'}</td>}
+                      {showLocationColumn && <td className="hidden px-3 py-3 text-xs opacity-80 md:table-cell">{job.location || '—'}</td>}
                       <td className="px-3 py-3 opacity-80">{formatAppliedDate(job.applied_date)}</td>
 
                       <td className="px-3 py-3">
                         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[job.status]}`}>{job.status}</span>
                       </td>
 
-                      <td className="px-3 py-3">
+                      <td className="hidden px-3 py-3 sm:table-cell">
                         {job.interview_date && (
                           <a
                             href={calendarUrl}

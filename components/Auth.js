@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 const passwordInputClasses = 'w-full rounded-xl border border-[#FFE5E2] bg-[#FFFDF9] px-4 py-3 pr-12 text-sm outline-none transition focus:border-[#FFB7B2] focus:ring-2 focus:ring-[#FFD9D4]';
+const AUTH_PERSISTENCE_KEY = 'job-tracker-auth-persistence';
+const SESSION_ACTIVE_KEY = 'job-tracker-session-active';
 
 const getAppRedirectUrl = () => {
   if (process.env.NEXT_PUBLIC_APP_URL) {
@@ -19,6 +21,7 @@ export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -52,6 +55,10 @@ export default function Auth() {
       if (error) {
         setMessage({ type: 'error', text: error.message });
       } else {
+        if (!isSignUp && typeof window !== 'undefined') {
+          window.localStorage.setItem(AUTH_PERSISTENCE_KEY, rememberMe ? 'persistent' : 'session');
+          window.sessionStorage.setItem(SESSION_ACTIVE_KEY, '1');
+        }
         setMessage({
           type: 'success',
           text: isSignUp
@@ -61,7 +68,7 @@ export default function Auth() {
         setEmail('');
         setPassword('');
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'Something went wrong. Please try again.' });
     } finally {
       setLoading(false);
@@ -103,6 +110,11 @@ export default function Auth() {
         text: 'Supabase is not configured yet. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to your .env.local file and restart the app.',
       });
       return;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(AUTH_PERSISTENCE_KEY, rememberMe ? 'persistent' : 'session');
+      window.sessionStorage.setItem(SESSION_ACTIVE_KEY, '1');
     }
 
     setLoading(true);
@@ -207,6 +219,15 @@ export default function Auth() {
             </div>
             {!isSignUp && (
               <div className="mt-2 flex items-center justify-between text-xs">
+                <label className="inline-flex items-center gap-2 text-[#6C5656]">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(event) => setRememberMe(event.target.checked)}
+                    className="h-4 w-4 rounded border-[#FFD9D4] text-[#FFB7B2]"
+                  />
+                  <span>Remember me</span>
+                </label>
                 <button type="button" onClick={handleResetPassword} className="font-semibold text-[#E07A5F]">
                   Forgot password?
                 </button>
