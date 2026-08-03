@@ -7,16 +7,16 @@ import type {
   FormState,
   JobRecord,
   JobStatus,
+  SalaryCurrency,
   ThemeStyles,
   WorkType,
 } from '../../types';
-import { formatSalary } from '../../lib/salary';
+import { currencySymbols, formatSalary } from '../../lib/salary';
 
 type DashboardTabProps = {
   theme: ThemeStyles;
   form: FormState;
   handleInputChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
-  setSalaryUnit: (value: 'year' | 'hour') => void;
   handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
   submitting: boolean;
   message: { type: 'success' | 'error'; text: string } | null;
@@ -52,7 +52,6 @@ export default function DashboardTab({
   theme,
   form,
   handleInputChange,
-  setSalaryUnit,
   handleSubmit,
   submitting,
   message,
@@ -82,6 +81,7 @@ export default function DashboardTab({
   const buttonStyle = compactMode ? 'text-[10px] px-2.5 py-1' : 'text-xs px-3 py-1.5';
   const rowSpacing = compactMode ? 'py-2' : 'py-3';
   const formTitle = editingJobId ? 'Edit Application' : 'Add New Application';
+  const selectedCurrency: SalaryCurrency = form.salary_currency || 'USD';
 
   // Row expansion state machine (per-record visibility map for detail panels) enables independent open and close behavior for each table row.
   const toggleRow = (id: number) => {
@@ -147,33 +147,48 @@ export default function DashboardTab({
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
                 <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Salary number</label>
-                <input
-                  name="salary_value"
-                  type="number"
-                  step="0.01"
-                  value={form.salary_value ?? ''}
-                  onChange={handleInputChange}
-                  placeholder="e.g. 42.50"
-                  className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
-                />
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#8D6F6F]">
+                    {currencySymbols[selectedCurrency]}
+                  </span>
+                  <input
+                    name="salary_value"
+                    type="number"
+                    step="0.01"
+                    value={form.salary_value ?? ''}
+                    onChange={handleInputChange}
+                    placeholder="e.g. 42500"
+                    className={`w-full rounded-2xl border pl-9 pr-3 py-2 text-xs outline-none ${theme.input}`}
+                  />
+                </div>
               </div>
               <div className="sm:col-span-2">
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Rate type</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSalaryUnit('year')}
-                    className={`flex-1 rounded-2xl border px-3 py-2 text-xs font-semibold ${form.salary_unit === 'year' ? 'bg-[#FFB7B2] text-white' : theme.input}`}
+                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Pay type and currency</label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <select
+                    name="salary_unit"
+                    value={form.salary_unit || 'year'}
+                    onChange={handleInputChange}
+                    className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
                   >
-                    Yearly
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSalaryUnit('hour')}
-                    className={`flex-1 rounded-2xl border px-3 py-2 text-xs font-semibold ${form.salary_unit === 'hour' ? 'bg-[#FFB7B2] text-white' : theme.input}`}
+                    <option value="year">Yearly</option>
+                    <option value="hour">Hourly</option>
+                    <option value="salary">Salary</option>
+                  </select>
+                  <select
+                    name="salary_currency"
+                    value={selectedCurrency}
+                    onChange={handleInputChange}
+                    className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
                   >
-                    Hourly
-                  </button>
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="CAD">CAD (C$)</option>
+                    <option value="AUD">AUD (A$)</option>
+                    <option value="INR">INR (Rs)</option>
+                    <option value="JPY">JPY (¥)</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -385,7 +400,7 @@ export default function DashboardTab({
                       </td>
                       {showSalaryColumn && (
                         <td className="px-3 py-3 text-xs text-[#8C6418]">
-                          {job.salary_range || formatSalary(job.salary_value, job.salary_unit)}
+                          {job.salary_range || formatSalary(job.salary_value, job.salary_unit, job.salary_currency)}
                         </td>
                       )}
                       {showLocationColumn && <td className="px-3 py-3 text-xs opacity-80">{job.location || '—'}</td>}

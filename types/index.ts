@@ -1,7 +1,8 @@
 export type WorkType = 'remote' | 'hybrid' | 'onsite';
 export type JobStatus = 'applied' | 'interview' | 'offered' | 'rejected';
 export type ActiveTab = 'dashboard' | 'archive' | 'calendar' | 'settings' | 'spreadsheet';
-export type SalaryUnit = 'year' | 'hour';
+export type SalaryUnit = 'year' | 'hour' | 'salary';
+export type SalaryCurrency = 'USD' | 'EUR' | 'GBP' | 'CAD' | 'AUD' | 'INR' | 'JPY';
 export type DashboardSortOption =
   | 'salary_desc'
   | 'salary_asc'
@@ -59,6 +60,7 @@ export type JobRecord = {
   salary_range?: string | null;
   salary_value?: number | null;
   salary_unit?: SalaryUnit | null;
+  salary_currency?: SalaryCurrency | null;
   work_type?: WorkType | null;
   location?: string | null;
   tech_stack?: string | null;
@@ -81,6 +83,7 @@ export type FormState = {
   salary_range: string;
   salary_value?: string;
   salary_unit?: SalaryUnit;
+  salary_currency?: SalaryCurrency;
   work_type: WorkType;
   location: string;
   resume_storage_path?: string;

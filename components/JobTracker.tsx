@@ -8,6 +8,7 @@ import type {
   FormState,
   DashboardSortOption,
   DashboardPreferences,
+  SalaryCurrency,
   ThemeStyles,
 } from '../types';
 import { formatSalary } from '../lib/salary';
@@ -31,6 +32,15 @@ const isDashboardSortOption = (value: unknown): value is DashboardSortOption => 
     value === 'applied_desc' ||
     value === 'applied_asc'
   );
+};
+
+const salaryCurrencies: SalaryCurrency[] = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
+
+const inferCurrencyFromSalaryRange = (salaryRange: string | null | undefined): SalaryCurrency => {
+  if (!salaryRange) return 'USD';
+  const upper = salaryRange.toUpperCase();
+  const found = salaryCurrencies.find((currency) => upper.includes(currency));
+  return found || 'USD';
 };
 
 const makeGoogleCalendarUrl = (t: string, d: string, det: string, loc: string = '') => {
@@ -190,6 +200,7 @@ export default function JobTracker() {
     salary_range: '',
     salary_value: '',
     salary_unit: 'year',
+    salary_currency: 'USD',
     work_type: 'remote',
     location: '',
     resume_storage_path: '',
@@ -322,6 +333,7 @@ export default function JobTracker() {
       salary_range: job.salary_range || '',
       salary_value: job.salary_value !== null && job.salary_value !== undefined ? String(job.salary_value) : '',
       salary_unit: job.salary_unit || 'year',
+      salary_currency: job.salary_currency || inferCurrencyFromSalaryRange(job.salary_range),
       work_type: job.work_type || 'remote',
       location: job.location || '',
       resume_storage_path: job.resume_storage_path || '',
@@ -359,11 +371,28 @@ export default function JobTracker() {
     // Payload normalization (conversion from string-based form inputs into backend-safe scalar values) ensures numeric salary fields and derived labels are consistent.
     const salaryValueNumber = form.salary_value ? Number(form.salary_value) : undefined;
     const salaryUnit = form.salary_unit || 'year';
-    const salaryRange = salaryValueNumber ? formatSalary(salaryValueNumber, salaryUnit) : form.salary_range || '';
+    const salaryCurrency = form.salary_currency || 'USD';
+    const salaryRange = salaryValueNumber ? formatSalary(salaryValueNumber, salaryUnit, salaryCurrency) : form.salary_range || '';
+    const persistedForm: Omit<FormState, 'salary_currency'> = {
+      company_name: form.company_name,
+      application_link: form.application_link,
+      notes: form.notes,
+      status: form.status,
+      applied_date: form.applied_date,
+      interview_date: form.interview_date,
+      deadline_date: form.deadline_date,
+      salary_range: form.salary_range,
+      salary_value: form.salary_value,
+      salary_unit: form.salary_unit,
+      work_type: form.work_type,
+      location: form.location,
+      resume_storage_path: form.resume_storage_path,
+      cover_letter_storage_path: form.cover_letter_storage_path,
+    };
 
     const payload = {
       user_id: session.user.id,
-      ...form,
+      ...persistedForm,
       salary_range: salaryRange,
       salary_value: salaryValueNumber ?? null,
       salary_unit: salaryUnit,
@@ -675,7 +704,6 @@ export default function JobTracker() {
               theme={theme}
               form={form}
               handleInputChange={handleInputChange}
-              setSalaryUnit={(salaryUnit) => setForm((prev) => ({ ...prev, salary_unit: salaryUnit }))}
               handleSubmit={handleSubmit}
               submitting={submitting}
               message={message}
