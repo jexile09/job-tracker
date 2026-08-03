@@ -27,7 +27,7 @@ export default function CalendarTab({
 }: CalendarTabProps) {
   const [pendingCalendarLink, setPendingCalendarLink] = useState<string | null>(null);
 
-  // Memoized derivation (cached computed dataset that only recalculates when dependencies change) builds a chronologically sorted interview list for predictable rendering.
+  // Memoized derivation (cached computed dataset that recalculates only when dependency references change) builds a chronologically sorted interview list for stable and predictable rendering order.
   const interviews = useMemo(
     () =>
       jobs
@@ -42,7 +42,7 @@ export default function CalendarTab({
 
   const confirmCalendarOpen = () => {
     if (!pendingCalendarLink) return;
-    // External navigation call (browser API invocation that opens a new tab) sends a fully encoded template URL to Google Calendar.
+    // External navigation call (browser Window API invocation that opens a separate tab) sends a fully encoded template URL to Google Calendar for event prefill.
     window.open(pendingCalendarLink, '_blank', 'noopener,noreferrer');
     setPendingCalendarLink(null);
   };

@@ -37,7 +37,7 @@ export default function SpreadsheetTab({
   const [statusFilter, setStatusFilter] = useState<'all' | JobStatus>('all');
   const [archiveFilter, setArchiveFilter] = useState<'all' | 'active' | 'archived'>('all');
 
-  // Multi-stage filter pipeline (sequential narrowing process across status, archive state, and text search) produces the exact row set shown and exported.
+  // Multi-stage filter pipeline (sequential row-elimination process across status filter, archive-state filter, and substring text search) produces the exact dataset shown in the table and exported to CSV.
   const filteredJobs = useMemo(() => {
     const query = search.trim().toLowerCase();
     return jobs.filter((job) => {
@@ -56,7 +56,7 @@ export default function SpreadsheetTab({
   const archivedRows = filteredJobs.filter((job) => job.is_archived);
 
   const downloadCsv = () => {
-    // CSV serialization (conversion from in-memory arrays to comma-separated plain text) preserves quoting rules so commas inside user notes do not corrupt column alignment.
+    // CSV serialization (conversion from in-memory tabular arrays into comma-separated plain-text records) preserves quote-escaping rules so delimiter characters inside notes do not corrupt column alignment.
     const headers = [
       'Company',
       'Status',
@@ -92,7 +92,7 @@ export default function SpreadsheetTab({
       .join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    // Object URL lifecycle (temporary browser URL allocation and cleanup) enables file download without a dedicated backend endpoint.
+    // Object URL lifecycle (temporary browser-memory URL allocation followed by explicit release) enables file download behavior without requiring a dedicated backend export endpoint.
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
