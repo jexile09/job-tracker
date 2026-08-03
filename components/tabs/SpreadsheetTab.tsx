@@ -26,7 +26,6 @@ export default function SpreadsheetTab({ jobs, theme, darkMode }: SpreadsheetTab
       'Salary Unit',
       'Work Type',
       'Location',
-      'Tech Stack',
       'Notes',
       'Application Link',
     ];
@@ -41,7 +40,6 @@ export default function SpreadsheetTab({ jobs, theme, darkMode }: SpreadsheetTab
       job.salary_unit || '',
       job.work_type || '',
       job.location || '',
-      job.tech_stack || '',
       job.notes || '',
       job.application_link || '',
     ]);
@@ -90,7 +88,6 @@ export default function SpreadsheetTab({ jobs, theme, darkMode }: SpreadsheetTab
               <th className="px-3 py-2">Rate Type</th>
               <th className="px-3 py-2">Work Type</th>
               <th className="px-3 py-2">Location</th>
-              <th className="px-3 py-2">Tech Stack</th>
               <th className="px-3 py-2">Notes</th>
               <th className="px-3 py-2">Link</th>
             </tr>
@@ -107,7 +104,6 @@ export default function SpreadsheetTab({ jobs, theme, darkMode }: SpreadsheetTab
                 <td className="px-3 py-3 text-xs text-[#6C5656]">{job.salary_unit || 'year'}</td>
                 <td className="px-3 py-3 text-xs text-[#6C5656]">{job.work_type || 'remote'}</td>
                 <td className="px-3 py-3 text-xs text-[#6C5656]">{job.location || '—'}</td>
-                <td className="px-3 py-3 text-xs text-[#6C5656]">{job.tech_stack || '—'}</td>
                 <td className="px-3 py-3 text-xs text-[#6C5656]">{job.notes || '—'}</td>
                 <td className="px-3 py-3 text-xs text-[#6C5656] break-all">{job.application_link || '—'}</td>
               </tr>
