@@ -43,6 +43,14 @@ const inferCurrencyFromSalaryRange = (salaryRange: string | null | undefined): S
   return found || 'USD';
 };
 
+const inferSalaryUnitFromSalaryRange = (salaryRange: string | null | undefined): FormState['salary_unit'] => {
+  if (!salaryRange) return 'year';
+  const normalized = salaryRange.toLowerCase();
+  if (normalized.includes('/ hr')) return 'hour';
+  if (normalized.includes('/ yr')) return 'year';
+  return 'salary';
+};
+
 const makeGoogleCalendarUrl = (t: string, d: string, det: string, loc: string = '') => {
   const encodeValue = (value: string) => encodeURIComponent(value || '');
 
@@ -134,7 +142,7 @@ const defaultDashboardPreferences: DashboardPreferences = {
   dashboardSort: 'applied_desc',
 };
 
-// Local storage hydration (state initialization from browser persistence) restores dashboard settings before the first paint to avoid interface flicker.
+// Local storage hydration (state initialization from browser-side persistence) restores dashboard preference primitives before first render, which prevents user-interface mismatch during initial paint.
 const readStoredDashboardPreferences = (): Partial<DashboardPreferences> => {
   if (typeof window === 'undefined') return {};
   const storedDashboardPreferences = window.localStorage.getItem(DASHBOARD_PREFERENCES_KEY);
@@ -149,7 +157,7 @@ const readStoredDashboardPreferences = (): Partial<DashboardPreferences> => {
 };
 
 export default function JobTracker() {
-  // State hydration (initial in-memory state construction) merges immutable defaults with user-specific browser persistence.
+  // State hydration (initial in-memory state composition) merges immutable defaults with persisted preference values, creating a deterministic source of truth for downstream rendering logic.
   const [initialDashboardPreferences] = useState<DashboardPreferences>(() => {
     const storedPreferences = readStoredDashboardPreferences();
     return {
@@ -188,7 +196,7 @@ export default function JobTracker() {
   const [preferencesHydrated, setPreferencesHydrated] = useState(!supabase);
   const [todayTimestamp] = useState(() => Date.now());
 
-  // Form factory (deterministic object creator for controlled inputs) centralizes default values used by create and reset flows.
+  // Form factory (deterministic object constructor for controlled form fields) centralizes default payload values used by create, edit cancel, and reset operations.
   const createEmptyForm = (): FormState => ({
     company_name: '',
     application_link: '',
@@ -209,7 +217,7 @@ export default function JobTracker() {
 
   const [form, setForm] = useState<FormState>(() => createEmptyForm());
 
-  // Preference applier (defensive state patching routine) updates only known boolean and enum fields from persisted payloads.
+  // Preference applier (defensive state patching routine) validates and applies only recognized boolean and enum fields from persisted payloads, preventing schema drift from mutating unrelated state.
   const applyDashboardPreferences = (prefs?: Partial<DashboardPreferences> | null) => {
     if (!prefs) return;
     if (typeof prefs.showOnlyOpen === 'boolean') setShowOnlyOpen(prefs.showOnlyOpen);
@@ -224,15 +232,15 @@ export default function JobTracker() {
     if (isDashboardSortOption(prefs.dashboardSort)) setDashboardSort(prefs.dashboardSort);
   };
 
-  // Database query (remote read operation against Supabase Postgres) fetches job records scoped by user identifier.
-  // Row Level Security (database authorization rules that restrict row visibility by authenticated user) must permit SELECT on jobs where user_id matches the session user.
+  // Database query (remote SELECT operation executed through Supabase PostgREST API) fetches job records constrained by authenticated user identifier.
+  // Row Level Security (RLS, database-level authorization policy engine that filters rows per user) must permit SELECT when user_id matches the authentication subject stored in the Supabase session token.
   const fetchJobs = useCallback(async (userId: string) => {
     if (!supabase) return;
     const { data } = await supabase.from('jobs').select('*').eq('user_id', userId).order('applied_date', { ascending: false });
     if (data) setJobs(data as JobRecord[]);
   }, []);
 
-  // Preference synchronization read (remote retrieval of per-user JSON settings) loads server-backed customization for cross-device consistency.
+  // Preference synchronization read (remote JSON retrieval for per-user customization state) loads server-backed settings so multiple devices converge on the same dashboard configuration.
   const loadRemotePreferences = useCallback(async (userId: string) => {
     if (!supabase) return;
     const { data, error } = await supabase
@@ -248,11 +256,11 @@ export default function JobTracker() {
   useEffect(() => {
     if (!supabase) return;
 
-    // Authentication bootstrap (initial session retrieval from Supabase auth cookies) obtains the current user context before protected data reads.
+    // Authentication bootstrap (initial session retrieval from Supabase-managed authentication cookies) resolves user identity before protected database operations begin.
     supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
       setSession(currentSession as AuthSession);
       if (currentSession?.user?.id) {
-        // Parallel asynchronous operations (concurrent network requests that reduce total load time) fetch jobs and remote preferences together.
+        // Parallel asynchronous operations (concurrent network requests executed with Promise.all) fetch transactional data and preference metadata in one latency window.
         await Promise.all([fetchJobs(currentSession.user.id), loadRemotePreferences(currentSession.user.id)]);
       }
       setLoadingSession(false);
@@ -262,7 +270,7 @@ export default function JobTracker() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Theme persistence write (browser-side storage update) preserves dark mode between page reloads.
+      // Theme persistence write (browser-side key-value storage update) preserves visual-mode state across reload boundaries and browser restarts.
       window.localStorage.setItem('job-tracker-dark-mode', darkMode ? 'true' : 'false');
     }
   }, [darkMode]);
@@ -298,14 +306,14 @@ export default function JobTracker() {
     if (!preferencesHydrated) return;
 
     if (typeof window !== 'undefined') {
-      // Local backup persistence (client-side redundant storage) keeps preferences available when remote writes are temporarily unavailable.
+      // Local backup persistence (client-side redundant state storage) keeps preference hydration available when remote writes fail due to transient network conditions.
       window.localStorage.setItem(DASHBOARD_PREFERENCES_KEY, JSON.stringify(dashboardPreferences));
     }
 
     if (!supabase || !session?.user?.id) return;
 
-    // Upsert operation (insert-or-update database transaction) writes one preference row per user for cross-device hydration.
-    // Row Level Security (database policy gatekeeper for INSERT and UPDATE operations) must allow writes only for the authenticated user_id.
+    // Upsert operation (insert-or-update database mutation transaction) writes exactly one preference row per user identifier, enabling idempotent synchronization semantics.
+    // Row Level Security (RLS policy evaluator for INSERT and UPDATE mutations) must authorize writes only when user_id equals the authenticated subject in the JWT claim set.
     void supabase.from('user_preferences').upsert(
       {
         user_id: session.user.id,
@@ -332,7 +340,7 @@ export default function JobTracker() {
       deadline_date: job.deadline_date || '',
       salary_range: job.salary_range || '',
       salary_value: job.salary_value !== null && job.salary_value !== undefined ? String(job.salary_value) : '',
-      salary_unit: job.salary_unit || 'year',
+      salary_unit: job.salary_unit || inferSalaryUnitFromSalaryRange(job.salary_range),
       salary_currency: job.salary_currency || inferCurrencyFromSalaryRange(job.salary_range),
       work_type: job.work_type || 'remote',
       location: job.location || '',
@@ -367,10 +375,12 @@ export default function JobTracker() {
     e.preventDefault();
     if (!supabase || !session?.user?.id) return;
     setSubmitting(true);
+    setMessage(null);
 
-    // Payload normalization (conversion from string-based form inputs into backend-safe scalar values) ensures numeric salary fields and derived labels are consistent.
+    // Payload normalization (conversion from string-oriented form controls into backend-safe scalar fields) ensures salary numeric values, pay-type metadata, and display strings remain internally consistent.
     const salaryValueNumber = form.salary_value ? Number(form.salary_value) : undefined;
     const salaryUnit = form.salary_unit || 'year';
+    const salaryUnitForDb = salaryUnit === 'salary' ? 'year' : salaryUnit;
     const salaryCurrency = form.salary_currency || 'USD';
     const salaryRange = salaryValueNumber ? formatSalary(salaryValueNumber, salaryUnit, salaryCurrency) : form.salary_range || '';
     const persistedForm: Omit<FormState, 'salary_currency'> = {
@@ -383,7 +393,7 @@ export default function JobTracker() {
       deadline_date: form.deadline_date,
       salary_range: form.salary_range,
       salary_value: form.salary_value,
-      salary_unit: form.salary_unit,
+      salary_unit: salaryUnitForDb,
       work_type: form.work_type,
       location: form.location,
       resume_storage_path: form.resume_storage_path,
@@ -395,25 +405,29 @@ export default function JobTracker() {
       ...persistedForm,
       salary_range: salaryRange,
       salary_value: salaryValueNumber ?? null,
-      salary_unit: salaryUnit,
+      salary_unit: salaryUnitForDb,
       is_archived: false,
     };
 
     if (editingJobId) {
-      // Update query (database mutation that edits an existing row) targets the selected identifier.
+      // Update query (database UPDATE mutation scoped by primary key) edits an existing job row while preserving unchanged columns in Postgres storage.
       const { error } = await supabase.from('jobs').update(payload).eq('id', editingJobId);
       if (!error) {
         setMessage({ type: 'success', text: 'Updated! 🌸' });
         fetchJobs(session.user.id);
         resetForm();
+      } else {
+        setMessage({ type: 'error', text: error.message });
       }
     } else {
-      // Insert query (database mutation that creates a new row) appends a new job record under the authenticated user.
+      // Insert query (database INSERT mutation that appends a new row) creates a job record linked to the authenticated user for future RLS-scoped retrieval.
       const { error } = await supabase.from('jobs').insert(payload);
       if (!error) {
         setMessage({ type: 'success', text: 'Saved! 🌸' });
         fetchJobs(session.user.id);
         resetForm();
+      } else {
+        setMessage({ type: 'error', text: error.message });
       }
     }
 
@@ -450,7 +464,7 @@ export default function JobTracker() {
     const threeMonthsAgo = new Date(today);
     threeMonthsAgo.setDate(today.getDate() - 90);
 
-    // In-memory filtering pipeline (deterministic rule evaluation over client state) computes candidate rows before issuing a batched backend mutation.
+    // In-memory filtering pipeline (deterministic rule evaluation over current client cache) computes candidate identifiers before issuing a single batched archive mutation.
     const matchingJobs = jobs.filter((job) => {
       if (job.is_archived) return false;
       const appliedDate = new Date(`${job.applied_date}T00:00:00`);
@@ -467,7 +481,7 @@ export default function JobTracker() {
       return;
     }
 
-    // Batched update transaction (single request that mutates multiple rows) marks selected rows as archived for efficient network usage.
+    // Batched update transaction (single network mutation that updates multiple rows through an IN predicate) marks selected rows as archived with reduced request overhead.
     const { error } = await supabase
       .from('jobs')
       .update({ is_archived: true })
@@ -513,7 +527,7 @@ export default function JobTracker() {
       .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
       .replace(' AM', 'am')
       .replace(' PM', 'pm');
-    // Time zone extraction (locale formatter metadata lookup) appends a short zone marker that clarifies interview scheduling context.
+    // Time zone extraction (locale formatter metadata lookup using Intl parts) appends an explicit short zone label that clarifies interview scheduling context across regions.
     const timezone =
       new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
         .formatToParts(parsed)
@@ -546,7 +560,7 @@ export default function JobTracker() {
   };
 
   const sortedDashboardJobs = [...dashboardBaseJobs].sort((a, b) => {
-    // Comparator strategy (ordered decision tree that computes pairwise ranking) applies user-selected sorting semantics.
+    // Comparator strategy (ordered decision tree that computes pairwise ranking values) applies user-selected sorting semantics for salary, location, company name, and application date.
     if (dashboardSort === 'salary_desc' || dashboardSort === 'salary_asc') {
       const aSalary = sortableSalary(a);
       const bSalary = sortableSalary(b);
@@ -608,7 +622,7 @@ export default function JobTracker() {
 
   if (!session) return <div className="p-8 text-center">Please sign in to access Appli-Log.</div>;
 
-  // Component composition (parent orchestrator that passes typed props into tab modules) drives one-way data flow from container state to presentation layers.
+  // Component composition (parent orchestration layer that passes typed props into tab modules) enforces one-way data flow where container state becomes view-model input for presentation components.
   return (
     <div className={`min-h-screen p-4 sm:p-8 font-['Karla',sans-serif] transition-colors ${theme.bg}`}>
       <div className="mx-auto max-w-6xl space-y-6">
