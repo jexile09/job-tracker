@@ -94,7 +94,7 @@ export default function DashboardTab({
 
   return (
     <>
-      <section className={`rounded-[32px] border p-6 shadow-md sm:p-8 ${theme.card}`}>
+      <section className={`rounded-[32px] border p-5 shadow-md sm:p-8 ${theme.card}`}>
         <h2 className="text-3xl font-semibold">{formTitle}</h2>
         <form onSubmit={handleSubmit} className="mt-6 grid gap-4 lg:grid-cols-2">
           <div className={`space-y-4 rounded-[28px] border p-5 ${theme.innerCard}`}>
@@ -310,7 +310,7 @@ export default function DashboardTab({
         </form>
       </section>
 
-      <section className={`rounded-[32px] border p-6 shadow-md ${theme.card}`}>
+      <section className={`rounded-[32px] border p-5 shadow-md sm:p-6 ${theme.card}`}>
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
             <input
@@ -347,11 +347,11 @@ export default function DashboardTab({
               <option value="applied_asc">Applied: Oldest</option>
             </select>
           </div>
-          <div className="text-xs text-[#8D6F6F]">Tap a row to expand interview notes and details.</div>
+          <div className="text-xs text-[#8D6F6F]">Tap or click a row to expand interview notes and details.</div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
+        <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+          <table className="min-w-[760px] text-left text-sm">
             <thead>
               <tr className={`border-b ${theme.tableHeader}`}>
                 <th className="px-3 py-3">Company</th>

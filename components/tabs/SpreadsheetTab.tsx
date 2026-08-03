@@ -114,8 +114,8 @@ export default function SpreadsheetTab({
         <span className="text-xs opacity-70">{rows.length} item(s)</span>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className={`min-w-full text-left whitespace-nowrap ${darkMode ? 'text-[#E2E8F0]' : 'text-[#4E3B3B]'}`}>
+      <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+        <table className={`min-w-[880px] text-left whitespace-nowrap ${darkMode ? 'text-[#E2E8F0]' : 'text-[#4E3B3B]'}`}>
           <thead>
             <tr className={`border-b ${theme.tableHeader}`}>
               <th className="px-3 py-2">Company</th>
@@ -136,21 +136,18 @@ export default function SpreadsheetTab({
                 </td>
                 <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">{job.applied_date}</td>
                 <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">
-                  <div>{formatInterviewDateTime(job.interview_date)}</div>
-                  {job.interview_date ? (
-                    <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${getWeekdayChipStyle(job.interview_date)}`}>
-                      {getWeekdayLabel(job.interview_date)}
-                    </span>
-                  ) : null}
+                  <div className="flex items-center gap-2">
+                    <span className="truncate max-w-[320px]">{formatInterviewDateTime(job.interview_date)}</span>
+                    {job.interview_date ? (
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${getWeekdayChipStyle(job.interview_date)}`}>
+                        {getWeekdayLabel(job.interview_date)}
+                      </span>
+                    ) : null}
+                  </div>
                 </td>
                 <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">{job.salary_range || '—'}</td>
                 <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">{job.location || '—'}</td>
                 <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap max-w-[320px]">
-                  {job.interview_date ? (
-                    <span className={`mb-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${getWeekdayChipStyle(job.interview_date)}`}>
-                      {getWeekdayLabel(job.interview_date)}
-                    </span>
-                  ) : null}
                   <p className="truncate max-w-[320px]">{job.notes || '—'}</p>
                 </td>
               </tr>
@@ -166,7 +163,7 @@ export default function SpreadsheetTab({
   );
 
   return (
-    <section className={`rounded-[32px] border p-6 shadow-md ${theme.card}`}>
+    <section className={`rounded-[32px] border p-5 shadow-md sm:p-6 ${theme.card}`}>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-3xl font-semibold">Spreadsheet</h2>

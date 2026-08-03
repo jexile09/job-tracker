@@ -639,7 +639,7 @@ export default function JobTracker() {
 
   // Component composition (parent orchestration layer that passes typed props into tab modules) enforces one-way data flow where container state becomes view-model input for presentation components.
   return (
-    <div className={`min-h-screen p-4 sm:p-8 font-['Karla',sans-serif] transition-colors ${theme.bg}`}>
+    <div className={`min-h-screen p-3 sm:p-8 font-['Karla',sans-serif] transition-colors ${theme.bg}`}>
       <div className="mx-auto max-w-6xl space-y-6">
         <section className={`rounded-[32px] border p-6 shadow-md sm:p-8 ${theme.card}`}>
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
@@ -697,7 +697,8 @@ export default function JobTracker() {
           )}
         </section>
 
-        <div className="relative z-0 flex flex-wrap gap-2 px-6">
+        <div className="relative z-0 -mx-1 overflow-x-auto px-1 pb-1 [-webkit-overflow-scrolling:touch] sm:mx-0 sm:px-6">
+          <div className="flex min-w-max gap-2">
           {[
             { id: 'dashboard', label: 'Dashboard' },
             { id: 'archive', label: 'Archive' },
@@ -711,7 +712,7 @@ export default function JobTracker() {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as ActiveTab)}
-                className={`relative -mb-[2px] rounded-t-2xl px-6 py-2.5 text-sm font-bold tracking-wide transition-all ${
+                className={`relative -mb-[2px] shrink-0 rounded-t-2xl px-4 py-2.5 text-sm font-bold tracking-wide transition-all sm:px-6 ${
                   isActive
                     ? darkMode
                       ? 'border-t-2 border-x-2 border-[#3F3F46] bg-[#27272A] text-[#FFB7B2] shadow-sm'
@@ -725,6 +726,7 @@ export default function JobTracker() {
               </button>
             );
           })}
+          </div>
         </div>
 
         <div className="relative z-0 grid gap-6">
