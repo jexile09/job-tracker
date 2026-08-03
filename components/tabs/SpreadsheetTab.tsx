@@ -36,6 +36,7 @@ export default function SpreadsheetTab({
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | JobStatus>('all');
   const [archiveFilter, setArchiveFilter] = useState<'all' | 'active' | 'archived'>('all');
+  const [selectedJobForDetails, setSelectedJobForDetails] = useState<JobRecord | null>(null);
 
   // Multi-stage filter pipeline (sequential row-elimination process across status filter, archive-state filter, and substring text search) produces the exact dataset shown in the table and exported to CSV.
   const filteredJobs = useMemo(() => {
@@ -148,7 +149,13 @@ export default function SpreadsheetTab({
                 <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">{job.salary_range || '—'}</td>
                 <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">{job.location || '—'}</td>
                 <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap max-w-[320px]">
-                  <p className="truncate max-w-[320px]">{job.notes || '—'}</p>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedJobForDetails(job)}
+                    className={`rounded-xl border px-2.5 py-1 text-xs font-semibold ${theme.input}`}
+                  >
+                    Show Details
+                  </button>
                 </td>
               </tr>
             ))}
@@ -163,79 +170,108 @@ export default function SpreadsheetTab({
   );
 
   return (
-    <section className={`rounded-[32px] border p-5 shadow-md sm:p-6 ${theme.card}`}>
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-3xl font-semibold">Spreadsheet</h2>
-          <p className={`mt-2 max-w-2xl text-sm ${darkMode ? 'text-[#94A3B8]' : 'text-[#6C5656]'}`}>
-            Filter rows, scan status colors quickly, and export the current filtered dataset.
-          </p>
+    <>
+      <section className={`rounded-[32px] border p-5 shadow-md sm:p-6 ${theme.card}`}>
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-3xl font-semibold">Spreadsheet</h2>
+            <p className={`mt-2 max-w-2xl text-sm ${darkMode ? 'text-[#94A3B8]' : 'text-[#6C5656]'}`}>
+              Filter rows, scan status colors quickly, and export the current filtered dataset.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={downloadCsv}
+            className="rounded-2xl bg-[#FFB7B2] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#FFA9A0]"
+          >
+            Download CSV
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={downloadCsv}
-          className="rounded-2xl bg-[#FFB7B2] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#FFA9A0]"
-        >
-          Download CSV
-        </button>
-      </div>
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search company, location, notes"
-          className={`rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
-        />
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as 'all' | JobStatus)}
-          className={`rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
-        >
-          <option value="all">All statuses</option>
-          <option value="applied">Applied</option>
-          <option value="interview">Interview</option>
-          <option value="offered">Offered</option>
-          <option value="rejected">Rejected</option>
-        </select>
-        <select
-          value={archiveFilter}
-          onChange={(e) => setArchiveFilter(e.target.value as 'all' | 'active' | 'archived')}
-          className={`rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
-        >
-          <option value="all">All archive states</option>
-          <option value="active">Not archived</option>
-          <option value="archived">Archived</option>
-        </select>
-        <button
-          type="button"
-          onClick={clearFilters}
-          className={`rounded-2xl border px-4 py-2 text-sm font-semibold ${theme.input}`}
-        >
-          Clear filters
-        </button>
-      </div>
+        <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search company, location, notes"
+            className={`rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as 'all' | JobStatus)}
+            className={`rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
+          >
+            <option value="all">All statuses</option>
+            <option value="applied">Applied</option>
+            <option value="interview">Interview</option>
+            <option value="offered">Offered</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <select
+            value={archiveFilter}
+            onChange={(e) => setArchiveFilter(e.target.value as 'all' | 'active' | 'archived')}
+            className={`rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
+          >
+            <option value="all">All archive states</option>
+            <option value="active">Not archived</option>
+            <option value="archived">Archived</option>
+          </select>
+          <button
+            type="button"
+            onClick={clearFilters}
+            className={`rounded-2xl border px-4 py-2 text-sm font-semibold ${theme.input}`}
+          >
+            Clear filters
+          </button>
+        </div>
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-3">
-        <div className={`rounded-2xl border p-3 ${theme.innerCard}`}>
-          <p className="text-xs uppercase tracking-[0.18em] opacity-70">Filtered Total</p>
-          <p className="mt-1 text-xl font-semibold">{filteredJobs.length}</p>
+        <div className="mb-5 grid gap-3 sm:grid-cols-3">
+          <div className={`rounded-2xl border p-3 ${theme.innerCard}`}>
+            <p className="text-xs uppercase tracking-[0.18em] opacity-70">Filtered Total</p>
+            <p className="mt-1 text-xl font-semibold">{filteredJobs.length}</p>
+          </div>
+          <div className={`rounded-2xl border p-3 ${theme.innerCard}`}>
+            <p className="text-xs uppercase tracking-[0.18em] opacity-70">Not Archived</p>
+            <p className="mt-1 text-xl font-semibold">{activeRows.length}</p>
+          </div>
+          <div className={`rounded-2xl border p-3 ${theme.innerCard}`}>
+            <p className="text-xs uppercase tracking-[0.18em] opacity-70">Archived</p>
+            <p className="mt-1 text-xl font-semibold">{archivedRows.length}</p>
+          </div>
         </div>
-        <div className={`rounded-2xl border p-3 ${theme.innerCard}`}>
-          <p className="text-xs uppercase tracking-[0.18em] opacity-70">Not Archived</p>
-          <p className="mt-1 text-xl font-semibold">{activeRows.length}</p>
-        </div>
-        <div className={`rounded-2xl border p-3 ${theme.innerCard}`}>
-          <p className="text-xs uppercase tracking-[0.18em] opacity-70">Archived</p>
-          <p className="mt-1 text-xl font-semibold">{archivedRows.length}</p>
-        </div>
-      </div>
 
-      <div className="space-y-4">
-        {renderTable(activeRows, 'Not Archived')}
-        {renderTable(archivedRows, 'Archived')}
-      </div>
-    </section>
+        <div className="space-y-4">
+          {renderTable(activeRows, 'Not Archived')}
+          {renderTable(archivedRows, 'Archived')}
+        </div>
+      </section>
+
+      {selectedJobForDetails ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4 backdrop-blur-sm">
+          <div className={`w-full max-w-xl rounded-[28px] border p-6 shadow-xl ${theme.card}`}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-xl font-semibold">{selectedJobForDetails.company_name}</h3>
+                <p className="mt-1 text-xs opacity-75">
+                  {formatInterviewDateTime(selectedJobForDetails.interview_date)}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedJobForDetails(null)}
+                className={`rounded-xl border px-3 py-1.5 text-xs font-semibold ${theme.input}`}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className={`mt-4 rounded-2xl border p-4 text-sm ${theme.innerCard}`}>
+              <p className="text-xs uppercase tracking-[0.16em] opacity-70">Notes</p>
+              <p className="mt-2 whitespace-pre-wrap break-words">{selectedJobForDetails.notes || 'No notes yet.'}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }
