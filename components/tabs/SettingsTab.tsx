@@ -1,12 +1,39 @@
 'use client';
 
+import type { FormEvent } from 'react';
+import type { ThemeStyles } from '../../types';
+
+type CustomizationCheckboxProps = {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  description: string;
+};
+
+function CustomizationCheckbox({ label, checked, onChange, description }: CustomizationCheckboxProps) {
+  return (
+    <label className="flex items-start justify-between gap-3 rounded-2xl border p-3 text-sm">
+      <div className="min-w-0">
+        <p className="font-semibold">{label}</p>
+        <p className="text-xs opacity-70">{description}</p>
+      </div>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-1 h-4 w-4"
+      />
+    </label>
+  );
+}
+
 type SettingsTabProps = {
-  theme: any;
+  theme: ThemeStyles;
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
   newPassword: string;
   setNewPassword: (val: string) => void;
-  handlePasswordChange: (e: any) => void;
+  handlePasswordChange: (e: FormEvent<HTMLFormElement>) => void;
   userEmail?: string | null;
   handleSignOut: () => void;
   showOnlyOpen: boolean;
@@ -19,8 +46,15 @@ type SettingsTabProps = {
   setShowSalaryColumn: (val: boolean) => void;
   showLocationColumn: boolean;
   setShowLocationColumn: (val: boolean) => void;
-  defaultSalaryUnit: 'year' | 'hour';
-  setDefaultSalaryUnit: (val: 'year' | 'hour') => void;
+  showOpenApplicationsCard: boolean;
+  setShowOpenApplicationsCard: (val: boolean) => void;
+  showUpcomingInterviewsCard: boolean;
+  setShowUpcomingInterviewsCard: (val: boolean) => void;
+  showArchivedCard: boolean;
+  setShowArchivedCard: (val: boolean) => void;
+  showStatusBreakdown: boolean;
+  setShowStatusBreakdown: (val: boolean) => void;
+  onResetDashboardCustomization: () => void;
 };
 
 export default function SettingsTab({
@@ -42,8 +76,15 @@ export default function SettingsTab({
   setShowSalaryColumn,
   showLocationColumn,
   setShowLocationColumn,
-  defaultSalaryUnit,
-  setDefaultSalaryUnit,
+  showOpenApplicationsCard,
+  setShowOpenApplicationsCard,
+  showUpcomingInterviewsCard,
+  setShowUpcomingInterviewsCard,
+  showArchivedCard,
+  setShowArchivedCard,
+  showStatusBreakdown,
+  setShowStatusBreakdown,
+  onResetDashboardCustomization,
 }: SettingsTabProps) {
   const settingButton = (active: boolean) =>
     `shrink-0 rounded-xl px-4 py-2 text-xs font-semibold text-white ${active ? 'bg-[#FFB7B2]' : 'bg-[#71717A]'}`;
@@ -51,7 +92,7 @@ export default function SettingsTab({
   return (
     <section className={`flex h-full flex-col justify-between rounded-[32px] border p-6 shadow-md ${theme.card}`}>
       <div>
-        <h3 className="text-2xl font-semibold">Settings ⚙️</h3>
+        <h3 className="text-2xl font-semibold">Settings</h3>
         <div className="mt-6 space-y-4">
           <div className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${theme.innerCard}`}>
             <div className="min-w-0 flex-1">
@@ -69,7 +110,7 @@ export default function SettingsTab({
 
           <div className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${theme.innerCard}`}>
             <div className="min-w-0 flex-1">
-              <div className="font-semibold text-sm">Dark Mode 🌙</div>
+              <div className="font-semibold text-sm">Dark Mode</div>
               <div className="text-xs opacity-70">Use a softer dark tone across the app.</div>
             </div>
             <button type="button" onClick={() => setDarkMode(!darkMode)} className={settingButton(darkMode)}>
@@ -77,81 +118,80 @@ export default function SettingsTab({
             </button>
           </div>
 
-          <div className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${theme.innerCard}`}>
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold text-sm">Show only open applications</div>
-              <div className="text-xs opacity-70">Hide archived or rejected items in dashboard view.</div>
-            </div>
-            <button type="button" onClick={() => setShowOnlyOpen(!showOnlyOpen)} className={settingButton(showOnlyOpen)}>
-              {showOnlyOpen ? 'On' : 'Off'}
-            </button>
-          </div>
+          <details className={`rounded-2xl border p-4 ${theme.innerCard}`} open>
+            <summary className="cursor-pointer text-sm font-semibold">Dashboard Customization</summary>
+            <p className="mt-2 text-xs opacity-70">
+              Choose exactly what appears on your dashboard. These preferences sync with your account.
+            </p>
 
-          <div className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${theme.innerCard}`}>
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold text-sm">Compact dashboard rows</div>
-              <div className="text-xs opacity-70">Reduce spacing for a denser job table.</div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <CustomizationCheckbox
+                label="Show only open jobs"
+                description="Hide rejected items in the dashboard list."
+                checked={showOnlyOpen}
+                onChange={setShowOnlyOpen}
+              />
+              <CustomizationCheckbox
+                label="Compact rows"
+                description="Use tighter spacing in dashboard table rows."
+                checked={compactView}
+                onChange={setCompactView}
+              />
+              <CustomizationCheckbox
+                label="Hide details by default"
+                description="Start each row collapsed until opened."
+                checked={hideDetailsByDefault}
+                onChange={setHideDetailsByDefault}
+              />
+              <CustomizationCheckbox
+                label="Show salary column"
+                description="Display salary in the dashboard table."
+                checked={showSalaryColumn}
+                onChange={setShowSalaryColumn}
+              />
+              <CustomizationCheckbox
+                label="Show location column"
+                description="Display location in the dashboard table."
+                checked={showLocationColumn}
+                onChange={setShowLocationColumn}
+              />
+              <CustomizationCheckbox
+                label="Show open applications card"
+                description="Display top summary card for open applications."
+                checked={showOpenApplicationsCard}
+                onChange={setShowOpenApplicationsCard}
+              />
+              <CustomizationCheckbox
+                label="Show upcoming interviews card"
+                description="Display top summary card for upcoming interviews."
+                checked={showUpcomingInterviewsCard}
+                onChange={setShowUpcomingInterviewsCard}
+              />
+              <CustomizationCheckbox
+                label="Show archived card"
+                description="Display top summary card for archived jobs."
+                checked={showArchivedCard}
+                onChange={setShowArchivedCard}
+              />
+              <CustomizationCheckbox
+                label="Show status breakdown"
+                description="Show applied, interview, offered, and rejected counts."
+                checked={showStatusBreakdown}
+                onChange={setShowStatusBreakdown}
+              />
             </div>
-            <button type="button" onClick={() => setCompactView(!compactView)} className={settingButton(compactView)}>
-              {compactView ? 'On' : 'Off'}
-            </button>
-          </div>
 
-          <div className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${theme.innerCard}`}>
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold text-sm">Collapse details by default</div>
-              <div className="text-xs opacity-70">Keep notes and extra fields hidden until expanded.</div>
-            </div>
-            <button type="button" onClick={() => setHideDetailsByDefault(!hideDetailsByDefault)} className={settingButton(hideDetailsByDefault)}>
-              {hideDetailsByDefault ? 'On' : 'Off'}
+            <button
+              type="button"
+              onClick={onResetDashboardCustomization}
+              className="mt-4 w-full rounded-xl border border-[#FFD9D4] bg-[#FFF5F5] px-3 py-2 text-xs font-semibold text-[#A95565]"
+            >
+              Reset dashboard customization
             </button>
-          </div>
-
-          <div className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${theme.innerCard}`}>
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold text-sm">Show salary column</div>
-              <div className="text-xs opacity-70">Toggle salary visibility in the dashboard table.</div>
-            </div>
-            <button type="button" onClick={() => setShowSalaryColumn(!showSalaryColumn)} className={settingButton(showSalaryColumn)}>
-              {showSalaryColumn ? 'On' : 'Off'}
-            </button>
-          </div>
-
-          <div className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${theme.innerCard}`}>
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold text-sm">Show location column</div>
-              <div className="text-xs opacity-70">Display job location in the dashboard table.</div>
-            </div>
-            <button type="button" onClick={() => setShowLocationColumn(!showLocationColumn)} className={settingButton(showLocationColumn)}>
-              {showLocationColumn ? 'On' : 'Off'}
-            </button>
-          </div>
-
-          <div className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${theme.innerCard}`}>
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold text-sm">Default rate type</div>
-              <div className="text-xs opacity-70">Choose the default salary unit for new applications.</div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setDefaultSalaryUnit('year')}
-                className={`rounded-xl border px-3 py-2 text-xs font-semibold ${defaultSalaryUnit === 'year' ? 'bg-[#FFB7B2] text-white' : 'bg-[#71717A] text-white'}`}
-              >
-                Yearly
-              </button>
-              <button
-                type="button"
-                onClick={() => setDefaultSalaryUnit('hour')}
-                className={`rounded-xl border px-3 py-2 text-xs font-semibold ${defaultSalaryUnit === 'hour' ? 'bg-[#FFB7B2] text-white' : 'bg-[#71717A] text-white'}`}
-              >
-                Hourly
-              </button>
-            </div>
-          </div>
+          </details>
 
           <form onSubmit={handlePasswordChange} className={`space-y-3 rounded-2xl border p-4 ${theme.innerCard}`}>
-            <h4 className="font-semibold text-sm">Change Password 🔑</h4>
+            <h4 className="font-semibold text-sm">Change Password</h4>
             <input
               type="password"
               required

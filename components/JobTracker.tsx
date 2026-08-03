@@ -1,6 +1,15 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import type { JobRecord, JobStatus, ActiveTab, AuthSession, FormState } from '../types';
+import type {
+  JobRecord,
+  JobStatus,
+  ActiveTab,
+  AuthSession,
+  FormState,
+  DashboardSortOption,
+  DashboardPreferences,
+  ThemeStyles,
+} from '../types';
 import { formatSalary } from '../lib/salary';
 import DashboardTab from './tabs/DashboardTab';
 import ArchiveTab from './tabs/ArchiveTab';
@@ -9,7 +18,21 @@ import SpreadsheetTab from './tabs/SpreadsheetTab';
 import SettingsTab from './tabs/SettingsTab';
 
 const getTodayString = () => new Date().toISOString().split('T')[0];
-const formatAppliedDate = (v: string) => new Date(`${v}T00:00:00`).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' });
+const DASHBOARD_PREFERENCES_KEY = 'job-tracker-dashboard-preferences-v1';
+
+const isDashboardSortOption = (value: unknown): value is DashboardSortOption => {
+  return (
+    value === 'salary_desc' ||
+    value === 'salary_asc' ||
+    value === 'location_asc' ||
+    value === 'location_desc' ||
+    value === 'name_asc' ||
+    value === 'name_desc' ||
+    value === 'applied_desc' ||
+    value === 'applied_asc'
+  );
+};
+
 const makeGoogleCalendarUrl = (t: string, d: string, det: string, loc: string = '') => {
   const encodeValue = (value: string) => encodeURIComponent(value || '');
 
@@ -71,6 +94,16 @@ const statusStyles: Record<JobStatus, string> = {
   rejected: 'bg-[#FFE6EA] text-[#8C3A49]',
 };
 
+const weekdayChipStyles: Record<number, string> = {
+  0: 'bg-[#FFE4EC] text-[#A64266]',
+  1: 'bg-[#EAF4FF] text-[#365E94]',
+  2: 'bg-[#E8F8EC] text-[#2F6A43]',
+  3: 'bg-[#FFF3CF] text-[#8A5F16]',
+  4: 'bg-[#EFEAFF] text-[#5C4AA3]',
+  5: 'bg-[#FFEAD8] text-[#A25A1C]',
+  6: 'bg-[#F6E8FF] text-[#7A3C9E]',
+};
+
 type CleanupRules = {
   rejected: boolean;
   olderThanOneWeek: boolean;
@@ -78,27 +111,72 @@ type CleanupRules = {
   olderThanThreeMonths: boolean;
 };
 
+const defaultDashboardPreferences: DashboardPreferences = {
+  showOnlyOpen: false,
+  compactView: false,
+  hideDetailsByDefault: true,
+  showSalaryColumn: true,
+  showLocationColumn: true,
+  showOpenApplicationsCard: true,
+  showUpcomingInterviewsCard: true,
+  showArchivedCard: true,
+  showStatusBreakdown: true,
+  dashboardSort: 'applied_desc',
+};
+
+const readStoredDashboardPreferences = (): Partial<DashboardPreferences> => {
+  if (typeof window === 'undefined') return {};
+  const storedDashboardPreferences = window.localStorage.getItem(DASHBOARD_PREFERENCES_KEY);
+  if (!storedDashboardPreferences) return {};
+
+  try {
+    return JSON.parse(storedDashboardPreferences) as Partial<DashboardPreferences>;
+  } catch {
+    window.localStorage.removeItem(DASHBOARD_PREFERENCES_KEY);
+    return {};
+  }
+};
+
 export default function JobTracker() {
+  const [initialDashboardPreferences] = useState<DashboardPreferences>(() => {
+    const storedPreferences = readStoredDashboardPreferences();
+    return {
+      ...defaultDashboardPreferences,
+      ...storedPreferences,
+      dashboardSort: isDashboardSortOption(storedPreferences.dashboardSort)
+        ? storedPreferences.dashboardSort
+        : defaultDashboardPreferences.dashboardSort,
+    };
+  });
   const [session, setSession] = useState<AuthSession>(null);
   const [jobs, setJobs] = useState<JobRecord[]>([]);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('job-tracker-dark-mode') === 'true';
+  });
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [showOnlyOpen, setShowOnlyOpen] = useState(false);
-  const [compactView, setCompactView] = useState(false);
-  const [hideDetailsByDefault, setHideDetailsByDefault] = useState(true);
-  const [showSalaryColumn, setShowSalaryColumn] = useState(true);
-  const [showLocationColumn, setShowLocationColumn] = useState(true);
-  const [defaultSalaryUnit, setDefaultSalaryUnit] = useState<'year' | 'hour'>('year');
+  const [showOnlyOpen, setShowOnlyOpen] = useState(initialDashboardPreferences.showOnlyOpen);
+  const [compactView, setCompactView] = useState(initialDashboardPreferences.compactView);
+  const [hideDetailsByDefault, setHideDetailsByDefault] = useState(initialDashboardPreferences.hideDetailsByDefault);
+  const [showSalaryColumn, setShowSalaryColumn] = useState(initialDashboardPreferences.showSalaryColumn);
+  const [showLocationColumn, setShowLocationColumn] = useState(initialDashboardPreferences.showLocationColumn);
+  const [showOpenApplicationsCard, setShowOpenApplicationsCard] = useState(initialDashboardPreferences.showOpenApplicationsCard);
+  const [showUpcomingInterviewsCard, setShowUpcomingInterviewsCard] = useState(initialDashboardPreferences.showUpcomingInterviewsCard);
+  const [showArchivedCard, setShowArchivedCard] = useState(initialDashboardPreferences.showArchivedCard);
+  const [showStatusBreakdown, setShowStatusBreakdown] = useState(initialDashboardPreferences.showStatusBreakdown);
+  const [dashboardSort, setDashboardSort] = useState<DashboardSortOption>(initialDashboardPreferences.dashboardSort);
   const [newPassword, setNewPassword] = useState('');
   const [cleanupLoading, setCleanupLoading] = useState(false);
-  const [loadingSession, setLoadingSession] = useState(true);
+  const [loadingSession, setLoadingSession] = useState(Boolean(supabase));
   const [editingJobId, setEditingJobId] = useState<number | null>(null);
+  const [preferencesHydrated, setPreferencesHydrated] = useState(!supabase);
+  const [todayTimestamp] = useState(() => Date.now());
 
-  const createEmptyForm = (salaryUnit: 'year' | 'hour' = defaultSalaryUnit): FormState => ({
+  const createEmptyForm = (): FormState => ({
     company_name: '',
     application_link: '',
     notes: '',
@@ -108,7 +186,7 @@ export default function JobTracker() {
     deadline_date: '',
     salary_range: '',
     salary_value: '',
-    salary_unit: salaryUnit,
+    salary_unit: 'year',
     work_type: 'remote',
     location: '',
     resume_storage_path: '',
@@ -117,29 +195,50 @@ export default function JobTracker() {
 
   const [form, setForm] = useState<FormState>(() => createEmptyForm());
 
-  const fetchJobs = async (userId: string) => {
+  const applyDashboardPreferences = (prefs?: Partial<DashboardPreferences> | null) => {
+    if (!prefs) return;
+    if (typeof prefs.showOnlyOpen === 'boolean') setShowOnlyOpen(prefs.showOnlyOpen);
+    if (typeof prefs.compactView === 'boolean') setCompactView(prefs.compactView);
+    if (typeof prefs.hideDetailsByDefault === 'boolean') setHideDetailsByDefault(prefs.hideDetailsByDefault);
+    if (typeof prefs.showSalaryColumn === 'boolean') setShowSalaryColumn(prefs.showSalaryColumn);
+    if (typeof prefs.showLocationColumn === 'boolean') setShowLocationColumn(prefs.showLocationColumn);
+    if (typeof prefs.showOpenApplicationsCard === 'boolean') setShowOpenApplicationsCard(prefs.showOpenApplicationsCard);
+    if (typeof prefs.showUpcomingInterviewsCard === 'boolean') setShowUpcomingInterviewsCard(prefs.showUpcomingInterviewsCard);
+    if (typeof prefs.showArchivedCard === 'boolean') setShowArchivedCard(prefs.showArchivedCard);
+    if (typeof prefs.showStatusBreakdown === 'boolean') setShowStatusBreakdown(prefs.showStatusBreakdown);
+    if (isDashboardSortOption(prefs.dashboardSort)) setDashboardSort(prefs.dashboardSort);
+  };
+
+  const fetchJobs = useCallback(async (userId: string) => {
     if (!supabase) return;
     const { data } = await supabase.from('jobs').select('*').eq('user_id', userId).order('applied_date', { ascending: false });
     if (data) setJobs(data as JobRecord[]);
-  };
+  }, []);
+
+  const loadRemotePreferences = useCallback(async (userId: string) => {
+    if (!supabase) return;
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .select('dashboard_preferences')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error || !data?.dashboard_preferences) return;
+    applyDashboardPreferences(data.dashboard_preferences as Partial<DashboardPreferences>);
+  }, []);
 
   useEffect(() => {
-    if (!supabase) {
-      setLoadingSession(false);
-      return;
-    }
+    if (!supabase) return;
 
-    const storedDarkMode = typeof window !== 'undefined' ? window.localStorage.getItem('job-tracker-dark-mode') : null;
-    if (storedDarkMode !== null) {
-      setDarkMode(storedDarkMode === 'true');
-    }
-
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s as AuthSession);
-      if (s?.user?.id) fetchJobs(s.user.id);
+    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
+      setSession(currentSession as AuthSession);
+      if (currentSession?.user?.id) {
+        await Promise.all([fetchJobs(currentSession.user.id), loadRemotePreferences(currentSession.user.id)]);
+      }
       setLoadingSession(false);
+      setPreferencesHydrated(true);
     });
-  }, []);
+  }, [fetchJobs, loadRemotePreferences]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -147,36 +246,54 @@ export default function JobTracker() {
     }
   }, [darkMode]);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('job-tracker-show-only-open', String(showOnlyOpen));
-      window.localStorage.setItem('job-tracker-compact-view', String(compactView));
-      window.localStorage.setItem('job-tracker-hide-details', String(hideDetailsByDefault));
-      window.localStorage.setItem('job-tracker-show-salary-column', String(showSalaryColumn));
-      window.localStorage.setItem('job-tracker-show-location-column', String(showLocationColumn));
-      window.localStorage.setItem('job-tracker-default-salary-unit', defaultSalaryUnit);
-    }
-  }, [showOnlyOpen, compactView, hideDetailsByDefault, showSalaryColumn, showLocationColumn, defaultSalaryUnit]);
+  const dashboardPreferences = useMemo<DashboardPreferences>(
+    () => ({
+      showOnlyOpen,
+      compactView,
+      hideDetailsByDefault,
+      showSalaryColumn,
+      showLocationColumn,
+      showOpenApplicationsCard,
+      showUpcomingInterviewsCard,
+      showArchivedCard,
+      showStatusBreakdown,
+      dashboardSort,
+    }),
+    [
+      showOnlyOpen,
+      compactView,
+      hideDetailsByDefault,
+      showSalaryColumn,
+      showLocationColumn,
+      showOpenApplicationsCard,
+      showUpcomingInterviewsCard,
+      showArchivedCard,
+      showStatusBreakdown,
+      dashboardSort,
+    ]
+  );
 
   useEffect(() => {
+    if (!preferencesHydrated) return;
+
     if (typeof window !== 'undefined') {
-      const storedOnlyOpen = window.localStorage.getItem('job-tracker-show-only-open');
-      const storedCompact = window.localStorage.getItem('job-tracker-compact-view');
-      const storedHideDetails = window.localStorage.getItem('job-tracker-hide-details');
-      const storedShowSalary = window.localStorage.getItem('job-tracker-show-salary-column');
-      const storedShowLocation = window.localStorage.getItem('job-tracker-show-location-column');
-      const storedDefaultSalaryUnit = window.localStorage.getItem('job-tracker-default-salary-unit');
-      if (storedOnlyOpen !== null) setShowOnlyOpen(storedOnlyOpen === 'true');
-      if (storedCompact !== null) setCompactView(storedCompact === 'true');
-      if (storedHideDetails !== null) setHideDetailsByDefault(storedHideDetails === 'true');
-      if (storedShowSalary !== null) setShowSalaryColumn(storedShowSalary === 'true');
-      if (storedShowLocation !== null) setShowLocationColumn(storedShowLocation === 'true');
-      if (storedDefaultSalaryUnit === 'hour' || storedDefaultSalaryUnit === 'year') setDefaultSalaryUnit(storedDefaultSalaryUnit);
+      window.localStorage.setItem(DASHBOARD_PREFERENCES_KEY, JSON.stringify(dashboardPreferences));
     }
-  }, []);
+
+    if (!supabase || !session?.user?.id) return;
+
+    void supabase.from('user_preferences').upsert(
+      {
+        user_id: session.user.id,
+        dashboard_preferences: dashboardPreferences,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id' }
+    );
+  }, [dashboardPreferences, preferencesHydrated, session]);
 
   const resetForm = () => {
-    setForm(createEmptyForm(defaultSalaryUnit));
+    setForm(createEmptyForm());
     setEditingJobId(null);
   };
 
@@ -202,30 +319,6 @@ export default function JobTracker() {
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>, type: 'resume' | 'cover_letter') => {
-    if (!supabase || !session?.user?.id) return;
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const bucket = 'job-files';
-    const filePath = `applications/${session.user.id}/${Date.now()}_${file.name}`;
-    const { error } = await supabase.storage.from(bucket).upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: true,
-    });
-
-    if (error) {
-      setMessage({ type: 'error', text: `Upload failed: ${error.message}` });
-      return;
-    }
-
-    setForm((prev) => ({
-      ...prev,
-      [type === 'resume' ? 'resume_storage_path' : 'cover_letter_storage_path']: filePath,
-    }));
-    setMessage({ type: 'success', text: `${type === 'resume' ? 'Resume' : 'Cover letter'} uploaded.` });
   };
 
   const handlePasswordChange = async (e: FormEvent<HTMLFormElement>) => {
@@ -346,17 +439,92 @@ export default function JobTracker() {
     setCleanupLoading(false);
   };
 
-  const filteredJobs = jobs.filter((j) => {
-    if (activeTab === 'dashboard') {
-      if (j.is_archived) return false;
-      if (showOnlyOpen && j.status === 'rejected') return false;
-      if (selectedFilter !== 'all' && j.status !== selectedFilter) return false;
-    }
-    if (activeTab === 'archive' && !j.is_archived) return false;
-    return j.company_name.toLowerCase().includes(searchQuery.toLowerCase());
+  const resetDashboardCustomization = () => {
+    applyDashboardPreferences(defaultDashboardPreferences);
+  };
+
+  const formatAppliedDate = (value: string) => {
+    return new Date(`${value}T00:00:00`).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const formatInterviewDateTime = (value: string | null | undefined) => {
+    if (!value) return 'No interview date';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return value;
+
+    const date = parsed.toLocaleDateString('en-US', {
+      month: 'numeric',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const weekday = parsed.toLocaleDateString('en-US', { weekday: 'long' });
+    const time = parsed
+      .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+      .replace(' AM', 'am')
+      .replace(' PM', 'pm');
+    const timezone =
+      new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
+        .formatToParts(parsed)
+        .find((part) => part.type === 'timeZoneName')?.value || 'Local';
+
+    return `${date} (${weekday}) at ${time} ${timezone}`;
+  };
+
+  const getWeekdayChipStyle = (value: string | null | undefined) => {
+    if (!value) return 'bg-[#F3F4F6] text-[#6B7280]';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return 'bg-[#F3F4F6] text-[#6B7280]';
+    return weekdayChipStyles[parsed.getDay()];
+  };
+
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const matchesSearch = (job: JobRecord) =>
+    !normalizedSearch || job.company_name.toLowerCase().includes(normalizedSearch);
+
+  const dashboardBaseJobs = jobs.filter((job) => {
+    if (job.is_archived) return false;
+    if (showOnlyOpen && job.status === 'rejected') return false;
+    if (selectedFilter !== 'all' && job.status !== selectedFilter) return false;
+    return matchesSearch(job);
   });
 
-  const theme = {
+  const sortableSalary = (job: JobRecord) => {
+    if (typeof job.salary_value === 'number' && Number.isFinite(job.salary_value)) return job.salary_value;
+    return null;
+  };
+
+  const sortedDashboardJobs = [...dashboardBaseJobs].sort((a, b) => {
+    if (dashboardSort === 'salary_desc' || dashboardSort === 'salary_asc') {
+      const aSalary = sortableSalary(a);
+      const bSalary = sortableSalary(b);
+      if (aSalary === null && bSalary === null) return 0;
+      if (aSalary === null) return 1;
+      if (bSalary === null) return -1;
+      return dashboardSort === 'salary_desc' ? bSalary - aSalary : aSalary - bSalary;
+    }
+
+    if (dashboardSort === 'location_asc' || dashboardSort === 'location_desc') {
+      const result = (a.location || '').localeCompare(b.location || '', 'en', { sensitivity: 'base' });
+      return dashboardSort === 'location_asc' ? result : -result;
+    }
+
+    if (dashboardSort === 'name_asc' || dashboardSort === 'name_desc') {
+      const result = a.company_name.localeCompare(b.company_name, 'en', { sensitivity: 'base' });
+      return dashboardSort === 'name_asc' ? result : -result;
+    }
+
+    const aApplied = new Date(`${a.applied_date}T00:00:00`).getTime();
+    const bApplied = new Date(`${b.applied_date}T00:00:00`).getTime();
+    return dashboardSort === 'applied_asc' ? aApplied - bApplied : bApplied - aApplied;
+  });
+
+  const archiveJobs = jobs.filter((job) => job.is_archived && matchesSearch(job));
+
+  const theme: ThemeStyles = {
     bg: darkMode ? 'bg-[#020617] text-[#E2E8F0]' : 'bg-[#FAF8F5] text-[#4E3B3B]',
     card: darkMode ? 'bg-[#111827] border-[#1F2937]' : 'bg-[#FFFDF9] border-[#FFE5E2]',
     innerCard: darkMode ? 'bg-[#0B1220] border-[#1F2937] text-[#CBD5E1]' : 'bg-white border-[#FFE5E2] text-[#4E3B3B]',
@@ -371,7 +539,7 @@ export default function JobTracker() {
   const upcomingInterviews = activeJobs.filter((job) => {
     if (!job.interview_date) return false;
     const interviewDate = new Date(job.interview_date);
-    return interviewDate.getTime() > Date.now();
+    return interviewDate.getTime() > todayTimestamp;
   }).length;
   const archivedCount = jobs.filter((job) => job.is_archived).length;
   const statusCounts = {
@@ -395,7 +563,7 @@ export default function JobTracker() {
     <div className={`min-h-screen p-4 sm:p-8 font-['Karla',sans-serif] transition-colors ${theme.bg}`}>
       <div className="mx-auto max-w-6xl space-y-6">
         <section className={`rounded-[32px] border p-6 shadow-md sm:p-8 ${theme.card}`}>
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.24em] text-[#E07A5F]">Welcome back</p>
               <h1 className={`mt-2 text-3xl font-semibold tracking-tight ${darkMode ? 'text-[#E2E8F0]' : 'text-[#4E3B3B]'}`}>
@@ -406,49 +574,57 @@ export default function JobTracker() {
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
-                <p className="text-xs uppercase tracking-[0.3em] text-[#8D6F6F]">Open applications</p>
-                <p className="mt-3 text-3xl font-semibold">{totalApplications}</p>
-              </div>
-              <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
-                <p className="text-xs uppercase tracking-[0.3em] text-[#8D6F6F]">Upcoming interviews</p>
-                <p className="mt-3 text-3xl font-semibold">{upcomingInterviews}</p>
-              </div>
-              <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
-                <p className="text-xs uppercase tracking-[0.3em] text-[#8D6F6F]">Archived</p>
-                <p className="mt-3 text-3xl font-semibold">{archivedCount}</p>
-              </div>
+            <div className="grid w-full gap-3 sm:max-w-[540px] sm:grid-cols-3">
+              {showOpenApplicationsCard && (
+                <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
+                  <p className="text-xs uppercase tracking-[0.3em] text-[#8D6F6F]">Open applications</p>
+                  <p className="mt-3 text-3xl font-semibold">{totalApplications}</p>
+                </div>
+              )}
+              {showUpcomingInterviewsCard && (
+                <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
+                  <p className="text-xs uppercase tracking-[0.3em] text-[#8D6F6F]">Upcoming interviews</p>
+                  <p className="mt-3 text-3xl font-semibold">{upcomingInterviews}</p>
+                </div>
+              )}
+              {showArchivedCard && (
+                <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
+                  <p className="text-xs uppercase tracking-[0.3em] text-[#8D6F6F]">Archived</p>
+                  <p className="mt-3 text-3xl font-semibold">{archivedCount}</p>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-4">
-            <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
-              <p className="text-xs uppercase tracking-[0.25em] text-[#8D6F6F]">Applied</p>
-              <p className="mt-2 text-xl font-semibold">{statusCounts.applied}</p>
+          {showStatusBreakdown && (
+            <div className="mt-6 grid gap-3 sm:grid-cols-4">
+              <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
+                <p className="text-xs uppercase tracking-[0.25em] text-[#8D6F6F]">Applied</p>
+                <p className="mt-2 text-xl font-semibold">{statusCounts.applied}</p>
+              </div>
+              <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
+                <p className="text-xs uppercase tracking-[0.25em] text-[#8D6F6F]">Interview</p>
+                <p className="mt-2 text-xl font-semibold">{statusCounts.interview}</p>
+              </div>
+              <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
+                <p className="text-xs uppercase tracking-[0.25em] text-[#8D6F6F]">Offered</p>
+                <p className="mt-2 text-xl font-semibold">{statusCounts.offered}</p>
+              </div>
+              <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
+                <p className="text-xs uppercase tracking-[0.25em] text-[#8D6F6F]">Rejected</p>
+                <p className="mt-2 text-xl font-semibold">{statusCounts.rejected}</p>
+              </div>
             </div>
-            <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
-              <p className="text-xs uppercase tracking-[0.25em] text-[#8D6F6F]">Interview</p>
-              <p className="mt-2 text-xl font-semibold">{statusCounts.interview}</p>
-            </div>
-            <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
-              <p className="text-xs uppercase tracking-[0.25em] text-[#8D6F6F]">Offered</p>
-              <p className="mt-2 text-xl font-semibold">{statusCounts.offered}</p>
-            </div>
-            <div className={`rounded-[28px] border p-4 ${theme.innerCard}`}>
-              <p className="text-xs uppercase tracking-[0.25em] text-[#8D6F6F]">Rejected</p>
-              <p className="mt-2 text-xl font-semibold">{statusCounts.rejected}</p>
-            </div>
-          </div>
+          )}
         </section>
 
         <div className="relative z-0 flex flex-wrap gap-2 px-6">
           {[
-            { id: 'dashboard', label: '🌸 Dashboard' },
-            { id: 'archive', label: '📦 Archive' },
-            { id: 'calendar', label: '🗓️ Calendar' },
-            { id: 'spreadsheet', label: '🧾 Spreadsheet' },
-            { id: 'settings', label: '⚙️ Settings' },
+            { id: 'dashboard', label: 'Dashboard' },
+            { id: 'archive', label: 'Archive' },
+            { id: 'calendar', label: 'Calendar' },
+            { id: 'spreadsheet', label: 'Spreadsheet' },
+            { id: 'settings', label: 'Settings' },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -478,7 +654,7 @@ export default function JobTracker() {
               theme={theme}
               form={form}
               handleInputChange={handleInputChange}
-              handleFileChange={handleFileChange}
+              setSalaryUnit={(salaryUnit) => setForm((prev) => ({ ...prev, salary_unit: salaryUnit }))}
               handleSubmit={handleSubmit}
               submitting={submitting}
               message={message}
@@ -486,8 +662,11 @@ export default function JobTracker() {
               setSearchQuery={setSearchQuery}
               selectedFilter={selectedFilter}
               setSelectedFilter={setSelectedFilter}
-              filteredJobs={filteredJobs}
+              dashboardSort={dashboardSort}
+              setDashboardSort={setDashboardSort}
+              filteredJobs={sortedDashboardJobs}
               formatAppliedDate={formatAppliedDate}
+              formatInterviewDateTime={formatInterviewDateTime}
               makeGoogleCalendarUrl={makeGoogleCalendarUrl}
               statusStyles={statusStyles}
               handleToggleArchive={handleToggleArchive}
@@ -501,12 +680,21 @@ export default function JobTracker() {
               onCancelEdit={resetForm}
             />
           )}
-          {activeTab === 'spreadsheet' && <SpreadsheetTab jobs={jobs} theme={theme} darkMode={darkMode} />}
+          {activeTab === 'spreadsheet' && (
+            <SpreadsheetTab
+              jobs={jobs}
+              theme={theme}
+              darkMode={darkMode}
+              statusStyles={statusStyles}
+              formatInterviewDateTime={formatInterviewDateTime}
+              getWeekdayChipStyle={getWeekdayChipStyle}
+            />
+          )}
           {activeTab === 'archive' && (
             <ArchiveTab
               theme={theme}
               darkMode={darkMode}
-              filteredJobs={filteredJobs}
+              filteredJobs={archiveJobs}
               statusStyles={statusStyles}
               handleToggleArchive={handleToggleArchive}
               jobs={jobs}
@@ -514,7 +702,15 @@ export default function JobTracker() {
               cleanupLoading={cleanupLoading}
             />
           )}
-          {activeTab === 'calendar' && <CalendarTab theme={theme} jobs={jobs} makeGoogleCalendarUrl={makeGoogleCalendarUrl} />}
+          {activeTab === 'calendar' && (
+            <CalendarTab
+              theme={theme}
+              jobs={jobs}
+              makeGoogleCalendarUrl={makeGoogleCalendarUrl}
+              formatInterviewDateTime={formatInterviewDateTime}
+              getWeekdayChipStyle={getWeekdayChipStyle}
+            />
+          )}
           {activeTab === 'settings' && (
             <SettingsTab
               theme={theme}
@@ -535,8 +731,15 @@ export default function JobTracker() {
               setShowSalaryColumn={setShowSalaryColumn}
               showLocationColumn={showLocationColumn}
               setShowLocationColumn={setShowLocationColumn}
-              defaultSalaryUnit={defaultSalaryUnit}
-              setDefaultSalaryUnit={setDefaultSalaryUnit}
+              showOpenApplicationsCard={showOpenApplicationsCard}
+              setShowOpenApplicationsCard={setShowOpenApplicationsCard}
+              showUpcomingInterviewsCard={showUpcomingInterviewsCard}
+              setShowUpcomingInterviewsCard={setShowUpcomingInterviewsCard}
+              showArchivedCard={showArchivedCard}
+              setShowArchivedCard={setShowArchivedCard}
+              showStatusBreakdown={showStatusBreakdown}
+              setShowStatusBreakdown={setShowStatusBreakdown}
+              onResetDashboardCustomization={resetDashboardCustomization}
             />
           )}
         </div>

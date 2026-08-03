@@ -1,6 +1,40 @@
 export type WorkType = 'remote' | 'hybrid' | 'onsite';
 export type JobStatus = 'applied' | 'interview' | 'offered' | 'rejected';
 export type ActiveTab = 'dashboard' | 'archive' | 'calendar' | 'settings' | 'spreadsheet';
+export type SalaryUnit = 'year' | 'hour';
+export type DashboardSortOption =
+  | 'salary_desc'
+  | 'salary_asc'
+  | 'location_asc'
+  | 'location_desc'
+  | 'name_asc'
+  | 'name_desc'
+  | 'applied_desc'
+  | 'applied_asc';
+
+export type DashboardPreferences = {
+  showOnlyOpen: boolean;
+  compactView: boolean;
+  hideDetailsByDefault: boolean;
+  showSalaryColumn: boolean;
+  showLocationColumn: boolean;
+  showOpenApplicationsCard: boolean;
+  showUpcomingInterviewsCard: boolean;
+  showArchivedCard: boolean;
+  showStatusBreakdown: boolean;
+  dashboardSort: DashboardSortOption;
+};
+
+export type ThemeStyles = {
+  bg: string;
+  card: string;
+  innerCard: string;
+  input: string;
+  label: string;
+  tableHeader: string;
+  tableRow: string;
+};
+
 export type AuthSession = {
   user?: {
     id?: string;
@@ -24,7 +58,7 @@ export type JobRecord = {
 
   salary_range?: string | null;
   salary_value?: number | null;
-  salary_unit?: 'year' | 'hour' | null;
+  salary_unit?: SalaryUnit | null;
   work_type?: WorkType | null;
   location?: string | null;
   tech_stack?: string | null;
@@ -46,7 +80,7 @@ export type FormState = {
   deadline_date: string;
   salary_range: string;
   salary_value?: string;
-  salary_unit?: 'year' | 'hour';
+  salary_unit?: SalaryUnit;
   work_type: WorkType;
   location: string;
   resume_storage_path?: string;

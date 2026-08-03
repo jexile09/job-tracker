@@ -1,27 +1,38 @@
 'use client';
 
 import { Fragment, useState } from 'react';
-import type { JobRecord, JobStatus, FormState, WorkType } from '../../types';
+import type { ChangeEvent, FormEvent } from 'react';
+import type {
+  DashboardSortOption,
+  FormState,
+  JobRecord,
+  JobStatus,
+  ThemeStyles,
+  WorkType,
+} from '../../types';
 import { formatSalary } from '../../lib/salary';
 
 type DashboardTabProps = {
-  theme: any;
+  theme: ThemeStyles;
   form: FormState;
-  handleInputChange: (e: any) => void;
-  handleFileChange: (e: any, type: 'resume' | 'cover_letter') => void;
-  handleSubmit: (e: any) => void;
+  handleInputChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  setSalaryUnit: (value: 'year' | 'hour') => void;
+  handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
   submitting: boolean;
   message: { type: 'success' | 'error'; text: string } | null;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   selectedFilter: string;
   setSelectedFilter: (f: string) => void;
+  dashboardSort: DashboardSortOption;
+  setDashboardSort: (value: DashboardSortOption) => void;
   filteredJobs: JobRecord[];
   compactMode: boolean;
   hideDetailsByDefault: boolean;
   showSalaryColumn: boolean;
   showLocationColumn: boolean;
   formatAppliedDate: (d: string) => string;
+  formatInterviewDateTime: (d: string | null | undefined) => string;
   makeGoogleCalendarUrl: (t: string, d: string, det: string, loc?: string) => string;
   statusStyles: Record<JobStatus, string>;
   handleToggleArchive: (id: number, state: boolean) => void;
@@ -32,16 +43,16 @@ type DashboardTabProps = {
 };
 
 const workTypeBadges: Record<WorkType, { label: string; style: string }> = {
-  remote: { label: '🏠 Remote', style: 'bg-[#E8F8EC] text-[#3B6D3D]' },
-  hybrid: { label: '🪟 Hybrid', style: 'bg-[#FFF3CF] text-[#8C6418]' },
-  onsite: { label: '🏢 Onsite', style: 'bg-[#EAF4FF] text-[#3B629B]' },
+  remote: { label: 'Remote', style: 'bg-[#E8F8EC] text-[#3B6D3D]' },
+  hybrid: { label: 'Hybrid', style: 'bg-[#FFF3CF] text-[#8C6418]' },
+  onsite: { label: 'Onsite', style: 'bg-[#EAF4FF] text-[#3B629B]' },
 };
 
 export default function DashboardTab({
   theme,
   form,
   handleInputChange,
-  handleFileChange,
+  setSalaryUnit,
   handleSubmit,
   submitting,
   message,
@@ -49,10 +60,13 @@ export default function DashboardTab({
   setSearchQuery,
   selectedFilter,
   setSelectedFilter,
+  dashboardSort,
+  setDashboardSort,
   filteredJobs,
   compactMode,
   hideDetailsByDefault,
   formatAppliedDate,
+  formatInterviewDateTime,
   makeGoogleCalendarUrl,
   statusStyles,
   handleToggleArchive,
@@ -67,7 +81,7 @@ export default function DashboardTab({
 
   const buttonStyle = compactMode ? 'text-[10px] px-2.5 py-1' : 'text-xs px-3 py-1.5';
   const rowSpacing = compactMode ? 'py-2' : 'py-3';
-  const formTitle = editingJobId ? 'Edit Application 🌸' : 'Add New Application 🌸';
+  const formTitle = editingJobId ? 'Edit Application' : 'Add New Application';
 
   const toggleRow = (id: number) => {
     setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -82,7 +96,6 @@ export default function DashboardTab({
       <section className={`rounded-[32px] border p-6 shadow-md sm:p-8 ${theme.card}`}>
         <h2 className="text-3xl font-semibold">{formTitle}</h2>
         <form onSubmit={handleSubmit} className="mt-6 grid gap-4 lg:grid-cols-2">
-          {/* Left Side: General Info */}
           <div className={`space-y-4 rounded-[28px] border p-5 ${theme.innerCard}`}>
             <div>
               <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Company name</label>
@@ -108,23 +121,23 @@ export default function DashboardTab({
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Salary / Pay Range 💰</label>
+                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Salary / Pay Range</label>
                 <input
                   name="salary_range"
                   value={form.salary_range}
                   onChange={handleInputChange}
-                  placeholder="e.g. $70k - $85k / yr"
+                  placeholder="e.g. $70k - $85k"
                   className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
                 />
               </div>
 
               <div>
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Location 📍</label>
+                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Location</label>
                 <input
                   name="location"
                   value={form.location}
                   onChange={handleInputChange}
-                  placeholder="e.g. New York, Remote, NY"
+                  placeholder="e.g. New York, NY"
                   className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
                 />
               </div>
@@ -144,32 +157,22 @@ export default function DashboardTab({
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Pay period</label>
-                <select
-                  name="salary_unit"
-                  value={form.salary_unit ?? 'year'}
-                  onChange={handleInputChange}
-                  className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
-                >
-                  <option value="year">Per Year</option>
-                  <option value="hour">Per Hour</option>
-                </select>
-              </div>
-            </div>
-            <div className="rounded-2xl border border-[#E9E6E3] bg-[#FBF7F5] p-4 text-xs text-[#6C5656]">
-              <div className="mb-2 font-semibold text-[#4E3B3B]">Attachments (optional)</div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <div className="rounded-2xl bg-white px-3 py-2 shadow-sm">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-[#8D6F6F]">Resume</p>
-                  <p className="mt-1 text-sm text-[#3B629B]">
-                    {form.resume_storage_path ? form.resume_storage_path.split('/').pop() : 'Not uploaded'}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-white px-3 py-2 shadow-sm">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-[#8D6F6F]">Cover letter</p>
-                  <p className="mt-1 text-sm text-[#3B629B]">
-                    {form.cover_letter_storage_path ? form.cover_letter_storage_path.split('/').pop() : 'Not uploaded'}
-                  </p>
+                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Rate type</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSalaryUnit('year')}
+                    className={`flex-1 rounded-2xl border px-3 py-2 text-xs font-semibold ${form.salary_unit === 'year' ? 'bg-[#FFB7B2] text-white' : theme.input}`}
+                  >
+                    Yearly
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSalaryUnit('hour')}
+                    className={`flex-1 rounded-2xl border px-3 py-2 text-xs font-semibold ${form.salary_unit === 'hour' ? 'bg-[#FFB7B2] text-white' : theme.input}`}
+                  >
+                    Hourly
+                  </button>
                 </div>
               </div>
             </div>
@@ -180,14 +183,13 @@ export default function DashboardTab({
                 name="notes"
                 value={form.notes}
                 onChange={handleInputChange}
-                rows={2}
+                rows={3}
                 placeholder="Recruiter details, team info, next steps..."
                 className={`w-full rounded-2xl border px-4 py-2.5 text-sm outline-none ${theme.input}`}
               />
             </div>
           </div>
 
-          {/* Right Side: Status, Dates, Files */}
           <div className={`space-y-4 rounded-[28px] border p-5 ${theme.innerCard}`}>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
@@ -206,7 +208,7 @@ export default function DashboardTab({
               </div>
 
               <div>
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Work Type 💻</label>
+                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Work Type</label>
                 <select
                   name="work_type"
                   value={form.work_type}
@@ -245,7 +247,7 @@ export default function DashboardTab({
             </div>
 
             <div>
-              <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Interview Date & Time 🗓️</label>
+              <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Interview Date & Time</label>
               <input
                 name="interview_date"
                 type="datetime-local"
@@ -253,27 +255,9 @@ export default function DashboardTab({
                 onChange={handleInputChange}
                 className={`w-full rounded-xl border px-3 py-2 text-xs outline-none ${theme.input}`}
               />
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Upload resume</label>
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={(e) => handleFileChange(e, 'resume')}
-                  className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
-                />
-              </div>
-              <div>
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Upload cover letter</label>
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={(e) => handleFileChange(e, 'cover_letter')}
-                  className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
-                />
-              </div>
+              {form.interview_date ? (
+                <p className="mt-2 text-xs text-[#8D6F6F]">{formatInterviewDateTime(form.interview_date)}</p>
+              ) : null}
             </div>
 
             {message && (
@@ -310,21 +294,20 @@ export default function DashboardTab({
         </form>
       </section>
 
-      {/* APPLICATIONS TABLE */}
       <section className={`rounded-[32px] border p-6 shadow-md ${theme.card}`}>
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
             <input
               type="text"
               placeholder="Search company..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full sm:w-64 rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
+              className={`w-full sm:w-56 rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
             />
             <select
               value={selectedFilter}
               onChange={(e) => setSelectedFilter(e.target.value)}
-              className={`w-full sm:w-44 rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
+              className={`w-full sm:w-40 rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
             >
               <option value="all">All statuses</option>
               <option value="applied">Applied</option>
@@ -332,8 +315,22 @@ export default function DashboardTab({
               <option value="offered">Offered</option>
               <option value="rejected">Rejected</option>
             </select>
+            <select
+              value={dashboardSort}
+              onChange={(e) => setDashboardSort(e.target.value as DashboardSortOption)}
+              className={`w-full sm:w-56 rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
+            >
+              <option value="salary_desc">Salary: High to Low</option>
+              <option value="salary_asc">Salary: Low to High</option>
+              <option value="location_asc">Location: A to Z</option>
+              <option value="location_desc">Location: Z to A</option>
+              <option value="name_asc">Name: A to Z</option>
+              <option value="name_desc">Name: Z to A</option>
+              <option value="applied_desc">Applied: Newest</option>
+              <option value="applied_asc">Applied: Oldest</option>
+            </select>
           </div>
-          <div className="text-xs text-[#8D6F6F]">Tap a row to expand additional details.</div>
+          <div className="text-xs text-[#8D6F6F]">Tap a row to expand interview notes and details.</div>
         </div>
 
         <div className="overflow-x-auto">
@@ -367,12 +364,17 @@ export default function DashboardTab({
                     <tr className={`border-b ${theme.tableRow}`}>
                       <td className="px-3 py-3">
                         <div className="font-semibold">{job.company_name}</div>
+                        <div
+                          className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold tracking-[0.08em] uppercase ${workBadge.style}`}
+                        >
+                          {workBadge.label}
+                        </div>
                         {job.application_link && (
                           <a
                             href={job.application_link}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-xs text-[#E07A5F] underline"
+                            className="mt-1 block text-xs text-[#E07A5F] underline"
                           >
                             View posting
                           </a>
@@ -383,15 +385,11 @@ export default function DashboardTab({
                           {job.salary_range || formatSalary(job.salary_value, job.salary_unit)}
                         </td>
                       )}
-                      {showLocationColumn && (
-                        <td className="px-3 py-3 text-xs opacity-80">{job.location || '—'}</td>
-                      )}
+                      {showLocationColumn && <td className="px-3 py-3 text-xs opacity-80">{job.location || '—'}</td>}
                       <td className="px-3 py-3 opacity-80">{formatAppliedDate(job.applied_date)}</td>
 
                       <td className="px-3 py-3">
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[job.status]}`}>
-                          {job.status}
-                        </span>
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[job.status]}`}>{job.status}</span>
                       </td>
 
                       <td className="px-3 py-3">
@@ -402,7 +400,7 @@ export default function DashboardTab({
                             rel="noreferrer"
                             className="rounded-xl bg-[#EAF4FF] px-2.5 py-1 text-xs font-semibold text-[#3B629B]"
                           >
-                            ＋ Add Event
+                            Add Event
                           </a>
                         )}
                       </td>
@@ -419,10 +417,17 @@ export default function DashboardTab({
                           <div className="flex flex-wrap gap-2">
                             <button
                               type="button"
+                              onClick={() => onEdit(job)}
+                              className={`rounded-xl border ${buttonStyle} font-semibold ${theme.input}`}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => handleToggleArchive(job.id, true)}
                               className={`rounded-xl border ${buttonStyle} font-semibold ${theme.input}`}
                             >
-                              Archive 📦
+                              Archive
                             </button>
                             <button
                               type="button"
@@ -441,12 +446,14 @@ export default function DashboardTab({
                           <div className="grid gap-3 md:grid-cols-2">
                             <div className="space-y-1 rounded-2xl border p-3">
                               <p className="text-[11px] uppercase tracking-[0.24em] text-[#8D6F6F]">Interview</p>
-                              <p className="text-xs">{job.interview_date || 'No interview date'}</p>
-                              <p className="text-xs">{job.deadline_date ? `Deadline: ${job.deadline_date}` : 'No deadline set'}</p>
+                              <p className="text-xs">{formatInterviewDateTime(job.interview_date)}</p>
+                              <p className="text-xs">
+                                {job.deadline_date ? `Deadline: ${formatAppliedDate(job.deadline_date)}` : 'No deadline set'}
+                              </p>
                             </div>
                             <div className="space-y-1 rounded-2xl border p-3">
                               <p className="text-[11px] uppercase tracking-[0.24em] text-[#8D6F6F]">Additional info</p>
-                              {job.notes && <p className="text-xs">Notes: {job.notes}</p>}
+                              {job.notes ? <p className="text-xs">Notes: {job.notes}</p> : <p className="text-xs">No notes yet.</p>}
                               {job.application_link && (
                                 <a className="text-xs text-[#E07A5F] underline" href={job.application_link} target="_blank" rel="noreferrer">
                                   Open application link
@@ -463,6 +470,12 @@ export default function DashboardTab({
             </tbody>
           </table>
         </div>
+
+        {filteredJobs.length === 0 ? (
+          <div className={`mt-4 rounded-2xl border p-4 text-sm ${theme.innerCard}`}>
+            No applications match your current search, filter, and sort choices.
+          </div>
+        ) : null}
       </section>
     </>
   );
