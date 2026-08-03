@@ -538,6 +538,8 @@ export default function JobTracker() {
               setShowSalaryColumn={setShowSalaryColumn}
               showLocationColumn={showLocationColumn}
               setShowLocationColumn={setShowLocationColumn}
+              defaultSalaryUnit={defaultSalaryUnit}
+              setDefaultSalaryUnit={setDefaultSalaryUnit}
             />
           </div>
         </div>
