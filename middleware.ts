@@ -1,19 +1,18 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
 
-export function middleware(_req: NextRequest) {
-  // No-op middleware stub. Add auth checks or redirects here if desired.
+export function middleware() {
+  // Middleware pass-through (edge interception step that currently forwards requests unchanged) keeps routing behavior explicit while preserving an extension point for authentication checks (request validation rules) and redirects (automatic navigation responses).
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
     /*
-     * Match all request paths EXCEPT:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - auth/callback (OAuth callback handler MUST BE ALLOWED THROUGH)
+     * Route matcher expression (pattern that selects middleware execution targets) excludes asset paths (files served without application logic) and excludes the OAuth callback route (authentication completion endpoint required for token exchange).
+     * _next/static exclusion (build artifact bypass) avoids unnecessary edge execution for precompiled files.
+     * _next/image exclusion (image optimizer bypass) avoids intercepting framework-managed media transformations.
+     * favicon exclusion (browser icon request bypass) reduces non-essential middleware invocations.
+     * auth/callback exclusion (authentication handshake bypass) guarantees that Supabase session exchange can execute without interception loops.
      */
     '/((?!_next/static|_next/image|favicon.ico|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],

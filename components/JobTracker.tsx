@@ -124,6 +124,7 @@ const defaultDashboardPreferences: DashboardPreferences = {
   dashboardSort: 'applied_desc',
 };
 
+// Local storage hydration (state initialization from browser persistence) restores dashboard settings before the first paint to avoid interface flicker.
 const readStoredDashboardPreferences = (): Partial<DashboardPreferences> => {
   if (typeof window === 'undefined') return {};
   const storedDashboardPreferences = window.localStorage.getItem(DASHBOARD_PREFERENCES_KEY);
@@ -138,6 +139,7 @@ const readStoredDashboardPreferences = (): Partial<DashboardPreferences> => {
 };
 
 export default function JobTracker() {
+  // State hydration (initial in-memory state construction) merges immutable defaults with user-specific browser persistence.
   const [initialDashboardPreferences] = useState<DashboardPreferences>(() => {
     const storedPreferences = readStoredDashboardPreferences();
     return {
@@ -176,6 +178,7 @@ export default function JobTracker() {
   const [preferencesHydrated, setPreferencesHydrated] = useState(!supabase);
   const [todayTimestamp] = useState(() => Date.now());
 
+  // Form factory (deterministic object creator for controlled inputs) centralizes default values used by create and reset flows.
   const createEmptyForm = (): FormState => ({
     company_name: '',
     application_link: '',
@@ -195,6 +198,7 @@ export default function JobTracker() {
 
   const [form, setForm] = useState<FormState>(() => createEmptyForm());
 
+  // Preference applier (defensive state patching routine) updates only known boolean and enum fields from persisted payloads.
   const applyDashboardPreferences = (prefs?: Partial<DashboardPreferences> | null) => {
     if (!prefs) return;
     if (typeof prefs.showOnlyOpen === 'boolean') setShowOnlyOpen(prefs.showOnlyOpen);
@@ -209,12 +213,15 @@ export default function JobTracker() {
     if (isDashboardSortOption(prefs.dashboardSort)) setDashboardSort(prefs.dashboardSort);
   };
 
+  // Database query (remote read operation against Supabase Postgres) fetches job records scoped by user identifier.
+  // Row Level Security (database authorization rules that restrict row visibility by authenticated user) must permit SELECT on jobs where user_id matches the session user.
   const fetchJobs = useCallback(async (userId: string) => {
     if (!supabase) return;
     const { data } = await supabase.from('jobs').select('*').eq('user_id', userId).order('applied_date', { ascending: false });
     if (data) setJobs(data as JobRecord[]);
   }, []);
 
+  // Preference synchronization read (remote retrieval of per-user JSON settings) loads server-backed customization for cross-device consistency.
   const loadRemotePreferences = useCallback(async (userId: string) => {
     if (!supabase) return;
     const { data, error } = await supabase
@@ -230,9 +237,11 @@ export default function JobTracker() {
   useEffect(() => {
     if (!supabase) return;
 
+    // Authentication bootstrap (initial session retrieval from Supabase auth cookies) obtains the current user context before protected data reads.
     supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
       setSession(currentSession as AuthSession);
       if (currentSession?.user?.id) {
+        // Parallel asynchronous operations (concurrent network requests that reduce total load time) fetch jobs and remote preferences together.
         await Promise.all([fetchJobs(currentSession.user.id), loadRemotePreferences(currentSession.user.id)]);
       }
       setLoadingSession(false);
@@ -242,6 +251,7 @@ export default function JobTracker() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Theme persistence write (browser-side storage update) preserves dark mode between page reloads.
       window.localStorage.setItem('job-tracker-dark-mode', darkMode ? 'true' : 'false');
     }
   }, [darkMode]);
@@ -277,11 +287,14 @@ export default function JobTracker() {
     if (!preferencesHydrated) return;
 
     if (typeof window !== 'undefined') {
+      // Local backup persistence (client-side redundant storage) keeps preferences available when remote writes are temporarily unavailable.
       window.localStorage.setItem(DASHBOARD_PREFERENCES_KEY, JSON.stringify(dashboardPreferences));
     }
 
     if (!supabase || !session?.user?.id) return;
 
+    // Upsert operation (insert-or-update database transaction) writes one preference row per user for cross-device hydration.
+    // Row Level Security (database policy gatekeeper for INSERT and UPDATE operations) must allow writes only for the authenticated user_id.
     void supabase.from('user_preferences').upsert(
       {
         user_id: session.user.id,
@@ -343,6 +356,7 @@ export default function JobTracker() {
     if (!supabase || !session?.user?.id) return;
     setSubmitting(true);
 
+    // Payload normalization (conversion from string-based form inputs into backend-safe scalar values) ensures numeric salary fields and derived labels are consistent.
     const salaryValueNumber = form.salary_value ? Number(form.salary_value) : undefined;
     const salaryUnit = form.salary_unit || 'year';
     const salaryRange = salaryValueNumber ? formatSalary(salaryValueNumber, salaryUnit) : form.salary_range || '';
@@ -357,6 +371,7 @@ export default function JobTracker() {
     };
 
     if (editingJobId) {
+      // Update query (database mutation that edits an existing row) targets the selected identifier.
       const { error } = await supabase.from('jobs').update(payload).eq('id', editingJobId);
       if (!error) {
         setMessage({ type: 'success', text: 'Updated! 🌸' });
@@ -364,6 +379,7 @@ export default function JobTracker() {
         resetForm();
       }
     } else {
+      // Insert query (database mutation that creates a new row) appends a new job record under the authenticated user.
       const { error } = await supabase.from('jobs').insert(payload);
       if (!error) {
         setMessage({ type: 'success', text: 'Saved! 🌸' });
@@ -405,6 +421,7 @@ export default function JobTracker() {
     const threeMonthsAgo = new Date(today);
     threeMonthsAgo.setDate(today.getDate() - 90);
 
+    // In-memory filtering pipeline (deterministic rule evaluation over client state) computes candidate rows before issuing a batched backend mutation.
     const matchingJobs = jobs.filter((job) => {
       if (job.is_archived) return false;
       const appliedDate = new Date(`${job.applied_date}T00:00:00`);
@@ -421,6 +438,7 @@ export default function JobTracker() {
       return;
     }
 
+    // Batched update transaction (single request that mutates multiple rows) marks selected rows as archived for efficient network usage.
     const { error } = await supabase
       .from('jobs')
       .update({ is_archived: true })
@@ -466,6 +484,7 @@ export default function JobTracker() {
       .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
       .replace(' AM', 'am')
       .replace(' PM', 'pm');
+    // Time zone extraction (locale formatter metadata lookup) appends a short zone marker that clarifies interview scheduling context.
     const timezone =
       new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
         .formatToParts(parsed)
@@ -498,6 +517,7 @@ export default function JobTracker() {
   };
 
   const sortedDashboardJobs = [...dashboardBaseJobs].sort((a, b) => {
+    // Comparator strategy (ordered decision tree that computes pairwise ranking) applies user-selected sorting semantics.
     if (dashboardSort === 'salary_desc' || dashboardSort === 'salary_asc') {
       const aSalary = sortableSalary(a);
       const bSalary = sortableSalary(b);
@@ -559,6 +579,7 @@ export default function JobTracker() {
 
   if (!session) return <div className="p-8 text-center">Please sign in to access Appli-Log.</div>;
 
+  // Component composition (parent orchestrator that passes typed props into tab modules) drives one-way data flow from container state to presentation layers.
   return (
     <div className={`min-h-screen p-4 sm:p-8 font-['Karla',sans-serif] transition-colors ${theme.bg}`}>
       <div className="mx-auto max-w-6xl space-y-6">

@@ -83,6 +83,7 @@ export default function DashboardTab({
   const rowSpacing = compactMode ? 'py-2' : 'py-3';
   const formTitle = editingJobId ? 'Edit Application' : 'Add New Application';
 
+  // Row expansion state machine (per-record visibility map for detail panels) enables independent open and close behavior for each table row.
   const toggleRow = (id: number) => {
     setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -320,6 +321,7 @@ export default function DashboardTab({
               onChange={(e) => setDashboardSort(e.target.value as DashboardSortOption)}
               className={`w-full sm:w-56 rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
             >
+              {/* Sort selector mapping (UI control that maps user intent to typed comparator modes) drives deterministic ordering in the container-level sorting pipeline. */}
               <option value="salary_desc">Salary: High to Low</option>
               <option value="salary_asc">Salary: Low to High</option>
               <option value="location_asc">Location: A to Z</option>
@@ -348,6 +350,7 @@ export default function DashboardTab({
             </thead>
             <tbody>
               {filteredJobs.map((job) => {
+                // Event payload composition (structured calendar metadata assembly) combines notes, application link, and location for Google Calendar template URLs.
                 const workBadge = workTypeBadges[job.work_type || 'remote'];
                 const calendarDetails = [job.notes, job.application_link ? `Application: ${job.application_link}` : '']
                   .filter(Boolean)
