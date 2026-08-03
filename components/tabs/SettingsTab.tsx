@@ -19,6 +19,8 @@ type SettingsTabProps = {
   setShowSalaryColumn: (val: boolean) => void;
   showLocationColumn: boolean;
   setShowLocationColumn: (val: boolean) => void;
+  defaultSalaryUnit: 'year' | 'hour';
+  setDefaultSalaryUnit: (val: 'year' | 'hour') => void;
 };
 
 export default function SettingsTab({
@@ -40,6 +42,8 @@ export default function SettingsTab({
   setShowSalaryColumn,
   showLocationColumn,
   setShowLocationColumn,
+  defaultSalaryUnit,
+  setDefaultSalaryUnit,
 }: SettingsTabProps) {
   const settingButton = (active: boolean) =>
     `shrink-0 rounded-xl px-4 py-2 text-xs font-semibold text-white ${active ? 'bg-[#FFB7B2]' : 'bg-[#71717A]'}`;
@@ -121,6 +125,29 @@ export default function SettingsTab({
             <button type="button" onClick={() => setShowLocationColumn(!showLocationColumn)} className={settingButton(showLocationColumn)}>
               {showLocationColumn ? 'On' : 'Off'}
             </button>
+          </div>
+
+          <div className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${theme.innerCard}`}>
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold text-sm">Default rate type</div>
+              <div className="text-xs opacity-70">Choose the default salary unit for new applications.</div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setDefaultSalaryUnit('year')}
+                className={`rounded-xl border px-3 py-2 text-xs font-semibold ${defaultSalaryUnit === 'year' ? 'bg-[#FFB7B2] text-white' : 'bg-[#71717A] text-white'}`}
+              >
+                Yearly
+              </button>
+              <button
+                type="button"
+                onClick={() => setDefaultSalaryUnit('hour')}
+                className={`rounded-xl border px-3 py-2 text-xs font-semibold ${defaultSalaryUnit === 'hour' ? 'bg-[#FFB7B2] text-white' : 'bg-[#71717A] text-white'}`}
+              >
+                Hourly
+              </button>
+            </div>
           </div>
 
           <form onSubmit={handlePasswordChange} className={`space-y-3 rounded-2xl border p-4 ${theme.innerCard}`}>

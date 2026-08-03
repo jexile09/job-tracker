@@ -26,6 +26,9 @@ type DashboardTabProps = {
   statusStyles: Record<JobStatus, string>;
   handleToggleArchive: (id: number, state: boolean) => void;
   handleDelete: (id: number) => void;
+  editingJobId: number | null;
+  onEdit: (job: JobRecord) => void;
+  onCancelEdit: () => void;
 };
 
 const workTypeBadges: Record<WorkType, { label: string; style: string }> = {
@@ -54,6 +57,9 @@ export default function DashboardTab({
   statusStyles,
   handleToggleArchive,
   handleDelete,
+  editingJobId,
+  onEdit,
+  onCancelEdit,
   showSalaryColumn,
   showLocationColumn,
 }: DashboardTabProps) {
@@ -61,6 +67,7 @@ export default function DashboardTab({
 
   const buttonStyle = compactMode ? 'text-[10px] px-2.5 py-1' : 'text-xs px-3 py-1.5';
   const rowSpacing = compactMode ? 'py-2' : 'py-3';
+  const formTitle = editingJobId ? 'Edit Application 🌸' : 'Add New Application 🌸';
 
   const toggleRow = (id: number) => {
     setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -73,7 +80,7 @@ export default function DashboardTab({
   return (
     <>
       <section className={`rounded-[32px] border p-6 shadow-md sm:p-8 ${theme.card}`}>
-        <h2 className="text-3xl font-semibold">Add New Application 🌸</h2>
+        <h2 className="text-3xl font-semibold">{formTitle}</h2>
         <form onSubmit={handleSubmit} className="mt-6 grid gap-4 lg:grid-cols-2">
           {/* Left Side: General Info */}
           <div className={`space-y-4 rounded-[28px] border p-5 ${theme.innerCard}`}>
@@ -292,13 +299,24 @@ export default function DashboardTab({
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full rounded-2xl bg-[#FFB7B2] py-3 text-sm font-semibold text-white transition hover:bg-[#FFA9A0]"
-            >
-              {submitting ? 'Saving...' : 'Add Application'}
-            </button>
+            <div className="space-y-3">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full rounded-2xl bg-[#FFB7B2] py-3 text-sm font-semibold text-white transition hover:bg-[#FFA9A0]"
+              >
+                {submitting ? 'Saving...' : editingJobId ? 'Save changes' : 'Add Application'}
+              </button>
+              {editingJobId ? (
+                <button
+                  type="button"
+                  onClick={onCancelEdit}
+                  className="w-full rounded-2xl border border-[#94A3B8] bg-transparent py-3 text-sm font-semibold text-[#94A3B8] transition hover:bg-[#1F2937]/10"
+                >
+                  Cancel edit
+                </button>
+              ) : null}
+            </div>
           </div>
         </form>
       </section>

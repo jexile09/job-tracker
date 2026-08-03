@@ -4,6 +4,8 @@ import type { JobRecord } from '../../types';
 
 type SpreadsheetTabProps = {
   jobs: JobRecord[];
+  theme: any;
+  darkMode: boolean;
 };
 
 const formatCsvValue = (value: string | number | null | undefined) => {
@@ -12,7 +14,7 @@ const formatCsvValue = (value: string | number | null | undefined) => {
   return `"${escaped}"`;
 };
 
-export default function SpreadsheetTab({ jobs }: SpreadsheetTabProps) {
+export default function SpreadsheetTab({ jobs, theme, darkMode }: SpreadsheetTabProps) {
   const downloadCsv = () => {
     const headers = [
       'Company',
@@ -58,11 +60,11 @@ export default function SpreadsheetTab({ jobs }: SpreadsheetTabProps) {
   };
 
   return (
-    <section className="rounded-[32px] border p-6 shadow-md bg-white text-[#4E3B3B]">
+    <section className={`rounded-[32px] border p-6 shadow-md ${theme.card}`}>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-3xl font-semibold">Spreadsheet Export</h2>
-          <p className="mt-2 max-w-2xl text-sm text-[#6C5656]">
+          <p className={`mt-2 max-w-2xl text-sm ${darkMode ? 'text-[#94A3B8]' : 'text-[#6C5656]'}`}>
             Download a CSV version of your tracked applications or preview rows before exporting.
           </p>
         </div>
@@ -75,27 +77,39 @@ export default function SpreadsheetTab({ jobs }: SpreadsheetTabProps) {
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-[28px] border border-[#F7EEE8] bg-[#FCF7F5] p-4 text-sm">
-        <table className="min-w-full text-left">
+      <div className={`overflow-x-auto rounded-[28px] border p-4 text-sm ${theme.innerCard}`}>
+        <table className={`min-w-full text-left ${darkMode ? 'text-[#E2E8F0]' : 'text-[#4E3B3B]'}`}>
           <thead>
-            <tr className="border-b border-[#EEDDD1] text-xs uppercase tracking-[0.2em] text-[#8D6F6F]">
+            <tr className={`border-b ${theme.tableHeader}`}>
               <th className="px-3 py-2">Company</th>
               <th className="px-3 py-2">Status</th>
               <th className="px-3 py-2">Applied</th>
+              <th className="px-3 py-2">Interview</th>
+              <th className="px-3 py-2">Deadline</th>
               <th className="px-3 py-2">Salary</th>
+              <th className="px-3 py-2">Rate Type</th>
+              <th className="px-3 py-2">Work Type</th>
               <th className="px-3 py-2">Location</th>
               <th className="px-3 py-2">Tech Stack</th>
+              <th className="px-3 py-2">Notes</th>
+              <th className="px-3 py-2">Link</th>
             </tr>
           </thead>
           <tbody>
             {jobs.map((job) => (
-              <tr key={job.id} className="border-b border-[#F7EEE8]">
+              <tr key={job.id} className={`border-b ${theme.tableRow}`}>
                 <td className="px-3 py-3 font-semibold">{job.company_name}</td>
                 <td className="px-3 py-3 text-xs uppercase tracking-[0.1em] text-[#8D6F6F]">{job.status}</td>
                 <td className="px-3 py-3 text-xs text-[#6C5656]">{job.applied_date}</td>
-                <td className="px-3 py-3 text-xs text-[#6C5656]">{job.salary_range || '—'}</td>
+                <td className="px-3 py-3 text-xs text-[#6C5656]">{job.interview_date || '—'}</td>
+                <td className="px-3 py-3 text-xs text-[#6C5656]">{job.deadline_date || '—'}</td>
+                <td className="px-3 py-3 text-xs text-[#6C5656]">{job.salary_range || ''}</td>
+                <td className="px-3 py-3 text-xs text-[#6C5656]">{job.salary_unit || 'year'}</td>
+                <td className="px-3 py-3 text-xs text-[#6C5656]">{job.work_type || 'remote'}</td>
                 <td className="px-3 py-3 text-xs text-[#6C5656]">{job.location || '—'}</td>
                 <td className="px-3 py-3 text-xs text-[#6C5656]">{job.tech_stack || '—'}</td>
+                <td className="px-3 py-3 text-xs text-[#6C5656]">{job.notes || '—'}</td>
+                <td className="px-3 py-3 text-xs text-[#6C5656] break-all">{job.application_link || '—'}</td>
               </tr>
             ))}
           </tbody>

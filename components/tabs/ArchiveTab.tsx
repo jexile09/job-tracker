@@ -104,14 +104,14 @@ export default function ArchiveTab({
       {isModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4 backdrop-blur-sm">
           <div className={`w-full max-w-lg rounded-[30px] border p-6 shadow-xl ${theme.card}`}>
-            <div className={`flex items-center justify-between border-b pb-3 ${darkMode ? 'border-[#334155]' : 'border-[#FFE5E2]'}`}>
+            <div className={`flex items-center justify-between border-b pb-3 ${theme.tableHeader}`}>
               <h4 className={`text-lg font-semibold ${darkMode ? 'text-[#E2E8F0]' : 'text-[#4E3B3B]'}`}>Auto-Archive Rules</h4>
               <button type="button" onClick={() => setIsModalOpen(false)} className={`text-sm ${darkMode ? 'text-[#94A3B8] hover:text-[#E2E8F0]' : 'text-[#8D6F6F] hover:text-[#4E3B3B]'}`}>
                 ✕
               </button>
             </div>
 
-            <div className="mt-4 space-y-3 text-sm text-[#6C5656]">
+            <div className={`mt-4 space-y-3 text-sm ${darkMode ? 'text-[#CBD5E1]' : 'text-[#6C5656]'}`}>
               <label className={`flex items-center gap-3 rounded-2xl border p-3 ${theme.innerCard}`}>
                 <input type="checkbox" checked={rules.rejected} onChange={() => toggleRule('rejected')} className="h-4 w-4 rounded border-[#FFB7B2] text-[#FFB7B2] focus:ring-[#FFB7B2]" />
                 <span>Archive all Rejected applications</span>

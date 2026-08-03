@@ -92,11 +92,13 @@ export default function JobTracker() {
   const [hideDetailsByDefault, setHideDetailsByDefault] = useState(true);
   const [showSalaryColumn, setShowSalaryColumn] = useState(true);
   const [showLocationColumn, setShowLocationColumn] = useState(true);
+  const [defaultSalaryUnit, setDefaultSalaryUnit] = useState<'year' | 'hour'>('year');
   const [newPassword, setNewPassword] = useState('');
   const [cleanupLoading, setCleanupLoading] = useState(false);
   const [loadingSession, setLoadingSession] = useState(true);
+  const [editingJobId, setEditingJobId] = useState<number | null>(null);
 
-  const [form, setForm] = useState<FormState>({
+  const createEmptyForm = (salaryUnit: 'year' | 'hour' = defaultSalaryUnit): FormState => ({
     company_name: '',
     application_link: '',
     notes: '',
@@ -106,13 +108,15 @@ export default function JobTracker() {
     deadline_date: '',
     salary_range: '',
     salary_value: '',
-    salary_unit: 'year',
+    salary_unit: salaryUnit,
     work_type: 'remote',
     location: '',
     tech_stack: '',
     resume_storage_path: '',
     cover_letter_storage_path: '',
   });
+
+  const [form, setForm] = useState<FormState>(() => createEmptyForm());
 
   const fetchJobs = async (userId: string) => {
     if (!supabase) return;
@@ -151,8 +155,9 @@ export default function JobTracker() {
       window.localStorage.setItem('job-tracker-hide-details', String(hideDetailsByDefault));
       window.localStorage.setItem('job-tracker-show-salary-column', String(showSalaryColumn));
       window.localStorage.setItem('job-tracker-show-location-column', String(showLocationColumn));
+      window.localStorage.setItem('job-tracker-default-salary-unit', defaultSalaryUnit);
     }
-  }, [showOnlyOpen, compactView, hideDetailsByDefault, showSalaryColumn, showLocationColumn]);
+  }, [showOnlyOpen, compactView, hideDetailsByDefault, showSalaryColumn, showLocationColumn, defaultSalaryUnit]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -161,13 +166,41 @@ export default function JobTracker() {
       const storedHideDetails = window.localStorage.getItem('job-tracker-hide-details');
       const storedShowSalary = window.localStorage.getItem('job-tracker-show-salary-column');
       const storedShowLocation = window.localStorage.getItem('job-tracker-show-location-column');
+      const storedDefaultSalaryUnit = window.localStorage.getItem('job-tracker-default-salary-unit');
       if (storedOnlyOpen !== null) setShowOnlyOpen(storedOnlyOpen === 'true');
       if (storedCompact !== null) setCompactView(storedCompact === 'true');
       if (storedHideDetails !== null) setHideDetailsByDefault(storedHideDetails === 'true');
       if (storedShowSalary !== null) setShowSalaryColumn(storedShowSalary === 'true');
       if (storedShowLocation !== null) setShowLocationColumn(storedShowLocation === 'true');
+      if (storedDefaultSalaryUnit === 'hour' || storedDefaultSalaryUnit === 'year') setDefaultSalaryUnit(storedDefaultSalaryUnit);
     }
   }, []);
+
+  const resetForm = () => {
+    setForm(createEmptyForm(defaultSalaryUnit));
+    setEditingJobId(null);
+  };
+
+  const loadJobIntoForm = (job: JobRecord) => {
+    setForm({
+      company_name: job.company_name,
+      application_link: job.application_link || '',
+      notes: job.notes || '',
+      status: job.status,
+      applied_date: job.applied_date,
+      interview_date: job.interview_date || '',
+      deadline_date: job.deadline_date || '',
+      salary_range: job.salary_range || '',
+      salary_value: job.salary_value !== null && job.salary_value !== undefined ? String(job.salary_value) : '',
+      salary_unit: job.salary_unit || 'year',
+      work_type: job.work_type || 'remote',
+      location: job.location || '',
+      tech_stack: job.tech_stack || '',
+      resume_storage_path: job.resume_storage_path || '',
+      cover_letter_storage_path: job.cover_letter_storage_path || '',
+    });
+    setEditingJobId(job.id);
+  };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -232,12 +265,22 @@ export default function JobTracker() {
       is_archived: false,
     };
 
-    const { error } = await supabase.from('jobs').insert(payload);
-    if (!error) {
-      setMessage({ type: 'success', text: 'Saved! 🌸' });
-      fetchJobs(session.user.id);
-      setForm((prev) => ({ ...prev, salary_range: '', salary_value: '', salary_unit: 'year' }));
+    if (editingJobId) {
+      const { error } = await supabase.from('jobs').update(payload).eq('id', editingJobId);
+      if (!error) {
+        setMessage({ type: 'success', text: 'Updated! 🌸' });
+        fetchJobs(session.user.id);
+        resetForm();
+      }
+    } else {
+      const { error } = await supabase.from('jobs').insert(payload);
+      if (!error) {
+        setMessage({ type: 'success', text: 'Saved! 🌸' });
+        fetchJobs(session.user.id);
+        resetForm();
+      }
     }
+
     setSubmitting(false);
   };
 
@@ -316,13 +359,13 @@ export default function JobTracker() {
   });
 
   const theme = {
-    bg: darkMode ? 'bg-[#0F172A] text-[#E2E8F0]' : 'bg-[#FAF8F5] text-[#4E3B3B]',
-    card: darkMode ? 'bg-[#111827] border-[#334155]' : 'bg-[#FFFDF9] border-[#FFE5E2]',
-    innerCard: darkMode ? 'bg-[#0F172A] border-[#334155] text-[#E5E7EB]' : 'bg-white border-[#FFE5E2] text-[#4E3B3B]',
-    input: darkMode ? 'bg-[#111827] border-[#475569] text-[#E5E7EB]' : 'bg-[#FFFDF9] border-[#FFE5E2] text-[#4E3B3B]',
-    label: darkMode ? 'text-[#CBD5E1]' : 'text-[#6C5656]',
-    tableHeader: darkMode ? 'border-[#334155] text-[#94A3B8]' : 'border-[#F2E7DE] text-[#8D6F6F]',
-    tableRow: darkMode ? 'border-[#1F2937]' : 'border-[#F7EEE8]',
+    bg: darkMode ? 'bg-[#020617] text-[#E2E8F0]' : 'bg-[#FAF8F5] text-[#4E3B3B]',
+    card: darkMode ? 'bg-[#111827] border-[#1F2937]' : 'bg-[#FFFDF9] border-[#FFE5E2]',
+    innerCard: darkMode ? 'bg-[#0B1220] border-[#1F2937] text-[#CBD5E1]' : 'bg-white border-[#FFE5E2] text-[#4E3B3B]',
+    input: darkMode ? 'bg-[#0D1328] border-[#1F2937] text-[#E2E8F0]' : 'bg-[#FFFDF9] border-[#FFE5E2] text-[#4E3B3B]',
+    label: darkMode ? 'text-[#94A3B8]' : 'text-[#6C5656]',
+    tableHeader: darkMode ? 'border-[#1F2937] text-[#94A3B8]' : 'border-[#F2E7DE] text-[#8D6F6F]',
+    tableRow: darkMode ? 'border-[#131A28]' : 'border-[#F7EEE8]',
   };
 
   const activeJobs = jobs.filter((job) => !job.is_archived);
@@ -357,10 +400,10 @@ export default function JobTracker() {
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.24em] text-[#E07A5F]">Welcome back</p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#4E3B3B]">
+              <h1 className={`mt-2 text-3xl font-semibold tracking-tight ${darkMode ? 'text-[#E2E8F0]' : 'text-[#4E3B3B]'}`}>
                 Appli-Log Dashboard
               </h1>
-              <p className="mt-2 text-sm text-[#6C5656]">
+              <p className={`mt-2 text-sm ${darkMode ? 'text-[#94A3B8]' : 'text-[#6C5656]'}`}>
                 Signed in as <span className="font-semibold">{session.user?.email ?? 'your account'}</span>
               </p>
             </div>
@@ -455,9 +498,12 @@ export default function JobTracker() {
                 hideDetailsByDefault={hideDetailsByDefault}
                 showSalaryColumn={showSalaryColumn}
                 showLocationColumn={showLocationColumn}
+                editingJobId={editingJobId}
+                onEdit={loadJobIntoForm}
+                onCancelEdit={resetForm}
               />
             )}
-            {activeTab === 'spreadsheet' && <SpreadsheetTab jobs={jobs} />}
+            {activeTab === 'spreadsheet' && <SpreadsheetTab jobs={jobs} theme={theme} darkMode={darkMode} />}
             {activeTab === 'archive' && (
               <ArchiveTab
                 theme={theme}

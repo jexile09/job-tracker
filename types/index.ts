@@ -46,7 +46,7 @@ export type FormState = {
   deadline_date: string;
   salary_range: string;
   salary_value?: string;
-  salary_unit?: 'year' | 'month' | 'hour';
+  salary_unit?: 'year' | 'hour';
   work_type: WorkType;
   location: string;
   tech_stack?: string;
