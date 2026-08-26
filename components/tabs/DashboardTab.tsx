@@ -120,33 +120,20 @@ export default function DashboardTab({
               />
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Salary / Pay Range</label>
-                <input
-                  name="salary_range"
-                  value={form.salary_range}
-                  onChange={handleInputChange}
-                  placeholder="e.g. $70k - $85k"
-                  className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
-                />
-              </div>
-
-              <div>
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Location</label>
-                <input
-                  name="location"
-                  value={form.location}
-                  onChange={handleInputChange}
-                  placeholder="e.g. New York, NY"
-                  className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
-                />
-              </div>
+            <div>
+              <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Location</label>
+              <input
+                name="location"
+                value={form.location}
+                onChange={handleInputChange}
+                placeholder="e.g. New York, NY"
+                className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
+              />
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Salary number</label>
+                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Salary</label>
                 <div className="relative">
                   <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#8D6F6F]">
                     {currencySymbols[selectedCurrency]}
@@ -157,39 +144,39 @@ export default function DashboardTab({
                     step="0.01"
                     value={form.salary_value ?? ''}
                     onChange={handleInputChange}
-                    placeholder="e.g. 42500"
+                    placeholder="e.g. 25.50 or 85000"
                     className={`w-full rounded-2xl border pl-9 pr-3 py-2 text-xs outline-none ${theme.input}`}
                   />
                 </div>
               </div>
-              <div className="sm:col-span-2">
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Pay type and currency</label>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <select
-                    name="salary_unit"
-                    value={form.salary_unit || 'year'}
-                    onChange={handleInputChange}
-                    className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
-                  >
-                    <option value="year">Yearly</option>
-                    <option value="hour">Hourly</option>
-                    <option value="salary">Salary</option>
-                  </select>
-                  <select
-                    name="salary_currency"
-                    value={selectedCurrency}
-                    onChange={handleInputChange}
-                    className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
-                  >
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
-                    <option value="CAD">CAD (C$)</option>
-                    <option value="AUD">AUD (A$)</option>
-                    <option value="INR">INR (Rs)</option>
-                    <option value="JPY">JPY (¥)</option>
-                  </select>
-                </div>
+              <div>
+                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Pay type</label>
+                <select
+                  name="salary_unit"
+                  value={form.salary_unit || 'year'}
+                  onChange={handleInputChange}
+                  className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
+                >
+                  <option value="hour">Hourly</option>
+                  <option value="year">Yearly</option>
+                </select>
+              </div>
+              <div>
+                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Currency</label>
+                <select
+                  name="salary_currency"
+                  value={selectedCurrency}
+                  onChange={handleInputChange}
+                  className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
+                >
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="GBP">GBP (£)</option>
+                  <option value="CAD">CAD (C$)</option>
+                  <option value="AUD">AUD (A$)</option>
+                  <option value="INR">INR (Rs)</option>
+                  <option value="JPY">JPY (¥)</option>
+                </select>
               </div>
             </div>
 
@@ -400,7 +387,7 @@ export default function DashboardTab({
                       </td>
                       {showSalaryColumn && (
                         <td className="hidden px-3 py-3 text-xs text-[#8C6418] sm:table-cell">
-                          {job.salary_range || formatSalary(job.salary_value, job.salary_unit, job.salary_currency)}
+                          {formatSalary(job.salary_value, job.salary_unit, job.salary_currency) || '—'}
                         </td>
                       )}
                       {showLocationColumn && <td className="hidden px-3 py-3 text-xs opacity-80 md:table-cell">{job.location || '—'}</td>}

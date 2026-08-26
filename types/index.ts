@@ -80,7 +80,6 @@ export type FormState = {
   applied_date: string;
   interview_date: string;
   deadline_date: string;
-  salary_range: string;
   salary_value?: string;
   salary_unit?: SalaryUnit;
   salary_currency?: SalaryCurrency;

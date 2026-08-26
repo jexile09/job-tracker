@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import type { JobRecord, JobStatus, ThemeStyles } from '../../types';
+import { formatSalary } from '../../lib/salary';
 
 type SpreadsheetTabProps = {
   jobs: JobRecord[];
@@ -65,8 +66,7 @@ export default function SpreadsheetTab({
       'Applied Date',
       'Interview Date',
       'Deadline Date',
-      'Salary Range',
-      'Salary Unit',
+      'Salary',
       'Work Type',
       'Location',
       'Notes',
@@ -80,8 +80,7 @@ export default function SpreadsheetTab({
       job.applied_date,
       job.interview_date || '',
       job.deadline_date || '',
-      job.salary_range || '',
-      job.salary_unit || '',
+      formatSalary(job.salary_value, job.salary_unit, job.salary_currency),
       job.work_type || '',
       job.location || '',
       job.notes || '',
@@ -146,7 +145,7 @@ export default function SpreadsheetTab({
                     ) : null}
                   </div>
                 </td>
-                <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">{job.salary_range || '—'}</td>
+                <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">{formatSalary(job.salary_value, job.salary_unit, job.salary_currency) || '—'}</td>
                 <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">{job.location || '—'}</td>
                 <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap max-w-[320px]">
                   <button

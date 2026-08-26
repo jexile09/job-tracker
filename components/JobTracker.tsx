@@ -12,7 +12,6 @@ import type {
   SalaryCurrency,
   ThemeStyles,
 } from '../types';
-import { formatSalary } from '../lib/salary';
 import DashboardTab from './tabs/DashboardTab';
 import ArchiveTab from './tabs/ArchiveTab';
 import CalendarTab from './tabs/CalendarTab';
@@ -50,8 +49,7 @@ const inferSalaryUnitFromSalaryRange = (salaryRange: string | null | undefined):
   if (!salaryRange) return 'year';
   const normalized = salaryRange.toLowerCase();
   if (normalized.includes('/ hr')) return 'hour';
-  if (normalized.includes('/ yr')) return 'year';
-  return 'salary';
+  return 'year';
 };
 
 const isMissingSalaryUnitColumnError = (message?: string) => {
@@ -214,7 +212,6 @@ export default function JobTracker() {
     applied_date: getTodayString(),
     interview_date: '',
     deadline_date: '',
-    salary_range: '',
     salary_value: '',
     salary_unit: 'year',
     salary_currency: 'USD',
@@ -367,7 +364,6 @@ export default function JobTracker() {
       applied_date: job.applied_date,
       interview_date: job.interview_date || '',
       deadline_date: job.deadline_date || '',
-      salary_range: job.salary_range || '',
       salary_value: job.salary_value !== null && job.salary_value !== undefined ? String(job.salary_value) : '',
       salary_unit: job.salary_unit || inferSalaryUnitFromSalaryRange(job.salary_range),
       salary_currency: job.salary_currency || inferCurrencyFromSalaryRange(job.salary_range),
@@ -406,12 +402,9 @@ export default function JobTracker() {
     setSubmitting(true);
     setMessage(null);
 
-    // Payload normalization (conversion from string-oriented form controls into backend-safe scalar fields) ensures salary numeric values, pay-type metadata, and display strings remain internally consistent.
+    // Payload normalization (conversion from string-oriented form controls into backend-safe scalar fields) ensures salary numeric values and pay-type metadata remain internally consistent.
     const salaryValueNumber = form.salary_value ? Number(form.salary_value) : undefined;
-    const salaryUnit = form.salary_unit || 'year';
-    const salaryUnitForDb = salaryUnit === 'salary' ? 'year' : salaryUnit;
-    const salaryCurrency = form.salary_currency || 'USD';
-    const salaryRange = salaryValueNumber ? formatSalary(salaryValueNumber, salaryUnit, salaryCurrency) : form.salary_range || '';
+    const salaryUnitForDb = form.salary_unit || 'year';
     const persistedForm: Omit<FormState, 'salary_currency'> = {
       company_name: form.company_name,
       application_link: form.application_link,
@@ -420,7 +413,6 @@ export default function JobTracker() {
       applied_date: form.applied_date,
       interview_date: form.interview_date,
       deadline_date: form.deadline_date,
-      salary_range: form.salary_range,
       salary_value: form.salary_value,
       salary_unit: salaryUnitForDb,
       work_type: form.work_type,
@@ -432,7 +424,7 @@ export default function JobTracker() {
     const payload = {
       user_id: session.user.id,
       ...persistedForm,
-      salary_range: salaryRange,
+      salary_currency: form.salary_currency || 'USD',
       salary_value: salaryValueNumber ?? null,
       salary_unit: salaryUnitForDb,
       is_archived: false,

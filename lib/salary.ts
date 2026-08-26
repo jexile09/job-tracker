@@ -26,13 +26,7 @@ export const formatSalary = (
     maximumFractionDigits: unit === 'hour' ? 2 : 0,
   });
 
-  const suffix =
-    unit === 'hour'
-      ? '/ hr'
-      : unit === 'salary'
-      ? ''
-      : '/ yr';
+  const suffix = unit === 'hour' ? '/ hr' : '/ yr';
 
-  const base = `${safeCurrency} ${symbol}${formattedValue}`;
-  return suffix ? `${base} ${suffix}` : base;
+  return `${symbol}${formattedValue} ${suffix}`;
 };
