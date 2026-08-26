@@ -8,20 +8,21 @@ type CustomizationCheckboxProps = {
   checked: boolean;
   onChange: (checked: boolean) => void;
   description: string;
+  darkMode: boolean;
 };
 
-function CustomizationCheckbox({ label, checked, onChange, description }: CustomizationCheckboxProps) {
+function CustomizationCheckbox({ label, checked, onChange, description, darkMode }: CustomizationCheckboxProps) {
   return (
-    <label className="flex items-start justify-between gap-3 rounded-2xl border p-3 text-sm">
+    <label className={`flex items-start justify-between gap-3 rounded-2xl border p-3 text-sm ${darkMode ? 'border-[#2d2e36]' : 'border-gray-200'}`}>
       <div className="min-w-0">
-        <p className="font-semibold">{label}</p>
-        <p className="text-xs opacity-70">{description}</p>
+        <p className={`font-semibold ${darkMode ? 'text-[#f4f4f5]' : ''}`}>{label}</p>
+        <p className={`text-xs ${darkMode ? 'text-[#a1a1aa]' : 'opacity-70'}`}>{description}</p>
       </div>
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-1 h-4 w-4"
+        className={`mt-1 h-4 w-4 ${darkMode ? 'accent-[#f87171]' : ''}`}
       />
     </label>
   );
@@ -87,7 +88,10 @@ export default function SettingsTab({
   onResetDashboardCustomization,
 }: SettingsTabProps) {
   const settingButton = (active: boolean) =>
-    `shrink-0 rounded-xl px-4 py-2 text-xs font-semibold text-white ${active ? 'bg-[#FFB7B2]' : 'bg-[#71717A]'}`;
+    `shrink-0 rounded-xl px-4 py-2 text-xs font-semibold text-white ${active ? 'bg-[#f87171]' : 'bg-[#71717A]'}`;
+  const secondaryButton = darkMode
+    ? 'border-[#3f3f46] bg-[#1c1d22] text-[#a1a1aa] hover:bg-[#18181b]'
+    : 'border-[#FFD9D4] bg-[#FFF5F5] text-[#A95565]';
 
   return (
     <section className={`flex h-full flex-col justify-between rounded-[32px] border p-6 shadow-md ${theme.card}`}>
@@ -102,7 +106,7 @@ export default function SettingsTab({
             <button
               type="button"
               onClick={handleSignOut}
-              className="shrink-0 rounded-xl border border-[#FFD9D4] bg-[#FFF5F5] px-3 py-2 text-xs font-semibold text-[#A95565]"
+              className={`shrink-0 rounded-xl border px-3 py-2 text-xs font-semibold ${secondaryButton}`}
             >
               Sign out
             </button>
@@ -130,61 +134,70 @@ export default function SettingsTab({
                 description="Hide rejected items in the dashboard list."
                 checked={showOnlyOpen}
                 onChange={setShowOnlyOpen}
+                darkMode={darkMode}
               />
               <CustomizationCheckbox
                 label="Compact rows"
                 description="Use tighter spacing in dashboard table rows."
                 checked={compactView}
                 onChange={setCompactView}
+                darkMode={darkMode}
               />
               <CustomizationCheckbox
                 label="Hide details by default"
                 description="Start each row collapsed until opened."
                 checked={hideDetailsByDefault}
                 onChange={setHideDetailsByDefault}
+                darkMode={darkMode}
               />
               <CustomizationCheckbox
                 label="Show salary column"
                 description="Display salary in the dashboard table."
                 checked={showSalaryColumn}
                 onChange={setShowSalaryColumn}
+                darkMode={darkMode}
               />
               <CustomizationCheckbox
                 label="Show location column"
                 description="Display location in the dashboard table."
                 checked={showLocationColumn}
                 onChange={setShowLocationColumn}
+                darkMode={darkMode}
               />
               <CustomizationCheckbox
                 label="Show open applications card"
                 description="Display top summary card for open applications."
                 checked={showOpenApplicationsCard}
                 onChange={setShowOpenApplicationsCard}
+                darkMode={darkMode}
               />
               <CustomizationCheckbox
                 label="Show upcoming interviews card"
                 description="Display top summary card for upcoming interviews."
                 checked={showUpcomingInterviewsCard}
                 onChange={setShowUpcomingInterviewsCard}
+                darkMode={darkMode}
               />
               <CustomizationCheckbox
                 label="Show archived card"
                 description="Display top summary card for archived jobs."
                 checked={showArchivedCard}
                 onChange={setShowArchivedCard}
+                darkMode={darkMode}
               />
               <CustomizationCheckbox
                 label="Show status breakdown"
                 description="Show applied, interview, offered, and rejected counts."
                 checked={showStatusBreakdown}
                 onChange={setShowStatusBreakdown}
+                darkMode={darkMode}
               />
             </div>
 
             <button
               type="button"
               onClick={onResetDashboardCustomization}
-              className="mt-4 w-full rounded-xl border border-[#FFD9D4] bg-[#FFF5F5] px-3 py-2 text-xs font-semibold text-[#A95565]"
+              className={`mt-4 w-full rounded-xl border px-3 py-2 text-xs font-semibold ${secondaryButton}`}
             >
               Reset dashboard customization
             </button>
@@ -200,7 +213,7 @@ export default function SettingsTab({
               placeholder="New password"
               className={`w-full rounded-xl border px-3 py-2 text-xs outline-none ${theme.input}`}
             />
-            <button type="submit" className="w-full rounded-xl bg-[#FFB7B2] py-2 text-xs font-semibold text-white">
+            <button type="submit" className={`w-full rounded-xl py-2 text-xs font-semibold text-white ${darkMode ? 'bg-[#f87171] hover:bg-[#ef4444]' : 'bg-[#FFB7B2]'}`}>
               Update Password
             </button>
           </form>

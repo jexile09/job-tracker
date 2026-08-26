@@ -15,6 +15,7 @@ import { currencySymbols, formatSalary } from '../../lib/salary';
 
 type DashboardTabProps = {
   theme: ThemeStyles;
+  darkMode: boolean;
   form: FormState;
   handleInputChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
@@ -42,14 +43,21 @@ type DashboardTabProps = {
   onCancelEdit: () => void;
 };
 
-const workTypeBadges: Record<WorkType, { label: string; style: string }> = {
+const workTypeBadgesLight: Record<WorkType, { label: string; style: string }> = {
   remote: { label: 'Remote', style: 'bg-[#E8F8EC] text-[#3B6D3D]' },
   hybrid: { label: 'Hybrid', style: 'bg-[#FFF3CF] text-[#8C6418]' },
   onsite: { label: 'Onsite', style: 'bg-[#EAF4FF] text-[#3B629B]' },
 };
 
+const workTypeBadgesDark: Record<WorkType, { label: string; style: string }> = {
+  remote: { label: 'Remote', style: 'bg-[#1c3321] text-[#7de0a0]' },
+  hybrid: { label: 'Hybrid', style: 'bg-[#332b1c] text-[#e0c17d]' },
+  onsite: { label: 'Onsite', style: 'bg-[#1c2733] text-[#7dabe0]' },
+};
+
 export default function DashboardTab({
   theme,
+  darkMode,
   form,
   handleInputChange,
   handleSubmit,
@@ -77,6 +85,8 @@ export default function DashboardTab({
   showLocationColumn,
 }: DashboardTabProps) {
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
+
+  const workTypeBadges = darkMode ? workTypeBadgesDark : workTypeBadgesLight;
 
   const buttonStyle = compactMode ? 'text-[10px] px-2.5 py-1' : 'text-xs px-3 py-1.5';
   const rowSpacing = compactMode ? 'py-2' : 'py-3';
@@ -267,7 +277,11 @@ export default function DashboardTab({
               <div
                 className={`rounded-2xl border px-4 py-2 text-xs ${
                   message.type === 'success'
-                    ? 'border-[#DDF3E3] bg-[#F3FFF7] text-[#3F6B4C]'
+                    ? darkMode
+                      ? 'border-[#1c3321] bg-[#18181b] text-[#7de0a0]'
+                      : 'border-[#DDF3E3] bg-[#F3FFF7] text-[#3F6B4C]'
+                    : darkMode
+                    ? 'border-[#331c1c] bg-[#18181b] text-[#f87171]'
                     : 'border-[#FFE2E2] bg-[#FFF5F5] text-[#A04A4A]'
                 }`}
               >
@@ -279,7 +293,7 @@ export default function DashboardTab({
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full rounded-2xl bg-[#FFB7B2] py-3 text-sm font-semibold text-white transition hover:bg-[#FFA9A0]"
+                className={`w-full rounded-2xl py-3 text-sm font-semibold text-white transition ${darkMode ? 'bg-[#f87171] hover:bg-[#ef4444]' : 'bg-[#FFB7B2] hover:bg-[#FFA9A0]'}`}
               >
                 {submitting ? 'Saving...' : editingJobId ? 'Save changes' : 'Add Application'}
               </button>
@@ -287,7 +301,7 @@ export default function DashboardTab({
                 <button
                   type="button"
                   onClick={onCancelEdit}
-                  className="w-full rounded-2xl border border-[#94A3B8] bg-transparent py-3 text-sm font-semibold text-[#94A3B8] transition hover:bg-[#1F2937]/10"
+                  className={`w-full rounded-2xl border py-3 text-sm font-semibold transition ${darkMode ? 'border-[#3f3f46] bg-transparent text-[#a1a1aa] hover:bg-[#18181b]' : 'border-[#94A3B8] bg-transparent text-[#94A3B8] hover:bg-[#1F2937]/10'}`}
                 >
                   Cancel edit
                 </button>
@@ -347,7 +361,7 @@ export default function DashboardTab({
                 <th className="px-3 py-3">Applied</th>
                 <th className="px-3 py-3">Status</th>
                 <th className="hidden px-3 py-3 sm:table-cell">Calendar</th>
-                <th className="px-3 py-3">Actions</th>
+                <th className="w-px px-3 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -386,7 +400,7 @@ export default function DashboardTab({
                         )}
                       </td>
                       {showSalaryColumn && (
-                        <td className="hidden px-3 py-3 text-xs text-[#8C6418] sm:table-cell">
+                        <td className={`hidden px-3 py-3 text-xs sm:table-cell ${darkMode ? 'text-[#a1a1aa]' : 'text-[#8C6418]'}`}>
                           {formatSalary(job.salary_value, job.salary_unit, job.salary_currency) || '—'}
                         </td>
                       )}
@@ -403,45 +417,43 @@ export default function DashboardTab({
                             href={calendarUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="rounded-xl bg-[#EAF4FF] px-2.5 py-1 text-xs font-semibold text-[#3B629B]"
+                            className={`rounded-xl px-2.5 py-1 text-xs font-semibold ${darkMode ? 'bg-[#18181b] text-[#f87171]' : 'bg-[#EAF4FF] text-[#3B629B]'}`}
                           >
                             Add Event
                           </a>
                         )}
                       </td>
 
-                      <td className="px-3 py-3">
-                        <div className="flex flex-col gap-2">
+                      <td className="w-px px-3 py-3">
+                        <div className="flex flex-wrap items-center gap-2">
                           <button
                             type="button"
                             onClick={() => toggleRow(job.id)}
-                            className={`rounded-xl border ${buttonStyle} font-semibold ${theme.input}`}
+                            className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-xl border ${buttonStyle} font-semibold ${theme.input}`}
                           >
                             {detailsOpen(job) ? 'Hide Details' : 'Show Details'}
                           </button>
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              onClick={() => onEdit(job)}
-                              className={`rounded-xl border ${buttonStyle} font-semibold ${theme.input}`}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleToggleArchive(job.id, true)}
-                              className={`rounded-xl border ${buttonStyle} font-semibold ${theme.input}`}
-                            >
-                              Archive
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(job.id)}
-                              className={`rounded-xl border border-[#FFD9D4] bg-[#FFF5F5] ${buttonStyle} font-semibold text-[#A95565]`}
-                            >
-                              Delete
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => onEdit(job)}
+                            className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-xl border ${buttonStyle} font-semibold ${theme.input}`}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleArchive(job.id, true)}
+                            className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-xl border ${buttonStyle} font-semibold ${theme.input}`}
+                          >
+                            Archive
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(job.id)}
+                            className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-xl border ${buttonStyle} font-semibold ${darkMode ? 'border-[#3f3f46] bg-[#1c1d22] text-[#a1a1aa] hover:bg-[#18181b]' : 'border-[#FFD9D4] bg-[#FFF5F5] text-[#A95565]'}`}
+                          >
+                            Delete
+                          </button>
                         </div>
                       </td>
                     </tr>

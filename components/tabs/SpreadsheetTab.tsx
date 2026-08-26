@@ -115,7 +115,7 @@ export default function SpreadsheetTab({
       </div>
 
       <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-        <table className={`min-w-[880px] text-left whitespace-nowrap ${darkMode ? 'text-[#E2E8F0]' : 'text-[#4E3B3B]'}`}>
+        <table className={`min-w-[880px] text-left whitespace-nowrap ${darkMode ? 'text-[#f4f4f5]' : 'text-[#4E3B3B]'}`}>
           <thead>
             <tr className={`border-b ${theme.tableHeader}`}>
               <th className="px-3 py-2">Company</th>
@@ -134,8 +134,8 @@ export default function SpreadsheetTab({
                 <td className="px-3 py-3 text-xs uppercase tracking-[0.1em]">
                   <span className={`rounded-full px-2.5 py-1 font-semibold ${statusStyles[job.status]}`}>{job.status}</span>
                 </td>
-                <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">{job.applied_date}</td>
-                <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">
+                <td className={`px-3 py-3 text-xs whitespace-nowrap ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>{job.applied_date}</td>
+                <td className={`px-3 py-3 text-xs whitespace-nowrap ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>
                   <div className="flex items-center gap-2">
                     <span className="truncate max-w-[320px]">{formatInterviewDateTime(job.interview_date)}</span>
                     {job.interview_date ? (
@@ -145,9 +145,9 @@ export default function SpreadsheetTab({
                     ) : null}
                   </div>
                 </td>
-                <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">{formatSalary(job.salary_value, job.salary_unit, job.salary_currency) || '—'}</td>
-                <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap">{job.location || '—'}</td>
-                <td className="px-3 py-3 text-xs text-[#6C5656] whitespace-nowrap max-w-[320px]">
+                <td className={`px-3 py-3 text-xs whitespace-nowrap ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>{formatSalary(job.salary_value, job.salary_unit, job.salary_currency) || '—'}</td>
+                <td className={`px-3 py-3 text-xs whitespace-nowrap ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>{job.location || '—'}</td>
+                <td className={`px-3 py-3 text-xs whitespace-nowrap max-w-[320px] ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>
                   <button
                     type="button"
                     onClick={() => setSelectedJobForDetails(job)}
@@ -174,14 +174,14 @@ export default function SpreadsheetTab({
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-3xl font-semibold">Spreadsheet</h2>
-            <p className={`mt-2 max-w-2xl text-sm ${darkMode ? 'text-[#94A3B8]' : 'text-[#6C5656]'}`}>
+            <p className={`mt-2 max-w-2xl text-sm ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>
               Filter rows, scan status colors quickly, and export the current filtered dataset.
             </p>
           </div>
           <button
             type="button"
             onClick={downloadCsv}
-            className="rounded-2xl bg-[#FFB7B2] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#FFA9A0]"
+            className={`rounded-2xl px-5 py-3 text-sm font-semibold text-white transition ${darkMode ? 'bg-[#f87171] hover:bg-[#ef4444]' : 'bg-[#FFB7B2] hover:bg-[#FFA9A0]'}`}
           >
             Download CSV
           </button>

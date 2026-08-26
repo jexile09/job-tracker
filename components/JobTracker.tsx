@@ -112,14 +112,21 @@ const makeGoogleCalendarUrl = (t: string, d: string, det: string, loc: string = 
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 };
 
-const statusStyles: Record<JobStatus, string> = {
+const statusStylesLight: Record<JobStatus, string> = {
   applied: 'bg-[#EAF4FF] text-[#3B629B]',
   interview: 'bg-[#FFF3CF] text-[#8C6418]',
   offered: 'bg-[#E8F8EC] text-[#3B6D3D]',
   rejected: 'bg-[#FFE6EA] text-[#8C3A49]',
 };
 
-const weekdayChipStyles: Record<number, string> = {
+const statusStylesDark: Record<JobStatus, string> = {
+  applied: 'bg-[#1c2733] text-[#7dabe0]',
+  interview: 'bg-[#332b1c] text-[#e0c17d]',
+  offered: 'bg-[#1c3321] text-[#7de0a0]',
+  rejected: 'bg-[#331c1c] text-[#f87171]',
+};
+
+const weekdayChipStylesLight: Record<number, string> = {
   0: 'bg-[#FFE4EC] text-[#A64266]',
   1: 'bg-[#EAF4FF] text-[#365E94]',
   2: 'bg-[#E8F8EC] text-[#2F6A43]',
@@ -127,6 +134,16 @@ const weekdayChipStyles: Record<number, string> = {
   4: 'bg-[#EFEAFF] text-[#5C4AA3]',
   5: 'bg-[#FFEAD8] text-[#A25A1C]',
   6: 'bg-[#F6E8FF] text-[#7A3C9E]',
+};
+
+const weekdayChipStylesDark: Record<number, string> = {
+  0: 'bg-[#331c26] text-[#e07da8]',
+  1: 'bg-[#1c2733] text-[#7dabe0]',
+  2: 'bg-[#1c3321] text-[#7de0a0]',
+  3: 'bg-[#332b1c] text-[#e0c17d]',
+  4: 'bg-[#261c33] text-[#b17de0]',
+  5: 'bg-[#332619] text-[#e0a17d]',
+  6: 'bg-[#2b1c33] text-[#c67de0]',
 };
 
 type CleanupRules = {
@@ -571,10 +588,11 @@ export default function JobTracker() {
   };
 
   const getWeekdayChipStyle = (value: string | null | undefined) => {
-    if (!value) return 'bg-[#F3F4F6] text-[#6B7280]';
+    const emptyStyle = darkMode ? 'bg-[#1c1d22] text-[#a1a1aa]' : 'bg-[#F3F4F6] text-[#6B7280]';
+    if (!value) return emptyStyle;
     const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) return 'bg-[#F3F4F6] text-[#6B7280]';
-    return weekdayChipStyles[parsed.getDay()];
+    if (Number.isNaN(parsed.getTime())) return emptyStyle;
+    return (darkMode ? weekdayChipStylesDark : weekdayChipStylesLight)[parsed.getDay()];
   };
 
   const normalizedSearch = searchQuery.trim().toLowerCase();
@@ -621,14 +639,16 @@ export default function JobTracker() {
 
   const archiveJobs = jobs.filter((job) => job.is_archived && matchesSearch(job));
 
+  const statusStyles = darkMode ? statusStylesDark : statusStylesLight;
+
   const theme: ThemeStyles = {
-    bg: darkMode ? 'bg-[#020617] text-[#E2E8F0]' : 'bg-[#FAF8F5] text-[#4E3B3B]',
-    card: darkMode ? 'bg-[#111827] border-[#1F2937]' : 'bg-[#FFFDF9] border-[#FFE5E2]',
-    innerCard: darkMode ? 'bg-[#0B1220] border-[#1F2937] text-[#CBD5E1]' : 'bg-white border-[#FFE5E2] text-[#4E3B3B]',
-    input: darkMode ? 'bg-[#0D1328] border-[#1F2937] text-[#E2E8F0]' : 'bg-[#FFFDF9] border-[#FFE5E2] text-[#4E3B3B]',
-    label: darkMode ? 'text-[#94A3B8]' : 'text-[#6C5656]',
-    tableHeader: darkMode ? 'border-[#1F2937] text-[#94A3B8]' : 'border-[#F2E7DE] text-[#8D6F6F]',
-    tableRow: darkMode ? 'border-[#131A28]' : 'border-[#F7EEE8]',
+    bg: darkMode ? 'bg-[#121316] text-[#f4f4f5]' : 'bg-[#FAF8F5] text-[#4E3B3B]',
+    card: darkMode ? 'bg-[#1c1d22] border-[#2d2e36]' : 'bg-[#FFFDF9] border-[#FFE5E2]',
+    innerCard: darkMode ? 'bg-[#1c1d22] border-[#2d2e36] text-[#a1a1aa]' : 'bg-white border-[#FFE5E2] text-[#4E3B3B]',
+    input: darkMode ? 'bg-[#18181b] border-[#3f3f46] text-[#f4f4f5]' : 'bg-[#FFFDF9] border-[#FFE5E2] text-[#4E3B3B]',
+    label: darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]',
+    tableHeader: darkMode ? 'border-[#2d2e36] text-[#a1a1aa]' : 'border-[#F2E7DE] text-[#8D6F6F]',
+    tableRow: darkMode ? 'border-[#2d2e36]' : 'border-[#F7EEE8]',
   };
 
   const activeJobs = jobs.filter((job) => !job.is_archived);
@@ -671,10 +691,10 @@ export default function JobTracker() {
                 className="mb-3 h-14 w-14 rounded-full object-cover sm:h-16 sm:w-16"
               />
               <p className="text-sm uppercase tracking-[0.24em] text-[#E07A5F]">Welcome back</p>
-              <h1 className={`mt-2 text-3xl font-semibold tracking-tight ${darkMode ? 'text-[#E2E8F0]' : 'text-[#4E3B3B]'}`}>
+              <h1 className={`mt-2 text-3xl font-semibold tracking-tight ${darkMode ? 'text-[#f4f4f5]' : 'text-[#4E3B3B]'}`}>
                 Appli-Log Dashboard
               </h1>
-              <p className={`mt-2 text-sm ${darkMode ? 'text-[#94A3B8]' : 'text-[#6C5656]'}`}>
+              <p className={`mt-2 text-sm ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>
                 Signed in as <span className="font-semibold">{session.user?.email ?? 'your account'}</span>
               </p>
             </div>
@@ -741,10 +761,10 @@ export default function JobTracker() {
                 className={`relative -mb-[2px] shrink-0 rounded-t-2xl px-4 py-2.5 text-sm font-bold tracking-wide transition-all sm:px-6 ${
                   isActive
                     ? darkMode
-                      ? 'border-t-2 border-x-2 border-[#3F3F46] bg-[#27272A] text-[#FFB7B2] shadow-sm'
+                      ? 'border-t-2 border-x-2 border-[#3f3f46] bg-[#1c1d22] text-[#f87171] shadow-sm'
                       : 'border-t-2 border-x-2 border-[#FFE5E2] bg-[#FFFDF9] text-[#E07A5F] shadow-sm'
                     : darkMode
-                    ? 'bg-[#27272A]/40 text-[#A1A1AA] hover:bg-[#27272A]/80'
+                    ? 'bg-[#1c1d22]/40 text-[#a1a1aa] hover:bg-[#1c1d22]/80'
                     : 'bg-[#FFE5E2]/40 text-[#8D6F6F] hover:bg-[#FFE5E2]/80'
                 }`}
               >
@@ -759,6 +779,7 @@ export default function JobTracker() {
           {activeTab === 'dashboard' && (
             <DashboardTab
               theme={theme}
+              darkMode={darkMode}
               form={form}
               handleInputChange={handleInputChange}
               handleSubmit={handleSubmit}
@@ -811,6 +832,7 @@ export default function JobTracker() {
           {activeTab === 'calendar' && (
             <CalendarTab
               theme={theme}
+              darkMode={darkMode}
               jobs={jobs}
               makeGoogleCalendarUrl={makeGoogleCalendarUrl}
               formatInterviewDateTime={formatInterviewDateTime}

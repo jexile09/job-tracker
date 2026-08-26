@@ -5,6 +5,7 @@ import type { JobRecord, ThemeStyles } from '../../types';
 
 type CalendarTabProps = {
   theme: ThemeStyles;
+  darkMode: boolean;
   jobs: JobRecord[];
   makeGoogleCalendarUrl: (t: string, d: string, det: string, loc?: string) => string;
   formatInterviewDateTime: (value: string | null | undefined) => string;
@@ -20,6 +21,7 @@ const getWeekdayLabel = (value: string | null | undefined) => {
 
 export default function CalendarTab({
   theme,
+  darkMode,
   jobs,
   makeGoogleCalendarUrl,
   formatInterviewDateTime,
@@ -43,7 +45,7 @@ export default function CalendarTab({
 
         <div className="mt-4 grid gap-4">
           <div className={`rounded-2xl border p-5 ${theme.innerCard}`}>
-            <h4 className="font-semibold text-[#FFB7B2]">Upcoming Interviews</h4>
+            <h4 className={`font-semibold ${darkMode ? 'text-[#f87171]' : 'text-[#FFB7B2]'}`}>Upcoming Interviews</h4>
 
             {interviews.length === 0 ? (
               <div className="mt-3 rounded-2xl border border-dashed p-4 text-sm opacity-70">
@@ -63,7 +65,7 @@ export default function CalendarTab({
                 );
 
                 return (
-                  <div key={job.id} className="mt-3 rounded-2xl border p-3">
+                  <div key={job.id} className={`mt-3 rounded-2xl border p-3 ${darkMode ? 'border-[#2d2e36]' : ''}`}>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <div className="font-semibold">{job.company_name}</div>
@@ -80,7 +82,7 @@ export default function CalendarTab({
                         href={calendarUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="rounded-xl bg-[#EAF4FF] px-3 py-1.5 text-xs font-semibold text-[#3B629B] sm:self-auto self-start"
+                        className={`rounded-xl px-3 py-1.5 text-xs font-semibold sm:self-auto self-start ${darkMode ? 'bg-[#18181b] text-[#f87171]' : 'bg-[#EAF4FF] text-[#3B629B]'}`}
                       >
                         Add Event
                       </a>
