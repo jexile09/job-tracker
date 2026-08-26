@@ -12,6 +12,7 @@ type CleanupRules = {
 
 type ArchiveTabProps = {
   theme: any;
+  darkMode: boolean;
   filteredJobs: JobRecord[];
   statusStyles: Record<JobStatus, string>;
   handleToggleArchive: (id: number, state: boolean) => void;
@@ -22,6 +23,7 @@ type ArchiveTabProps = {
 
 export default function ArchiveTab({
   theme,
+  darkMode,
   filteredJobs,
   statusStyles,
   handleToggleArchive,
@@ -54,7 +56,7 @@ export default function ArchiveTab({
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="rounded-2xl border border-[#FFE5E2] bg-[#FFFDF9] px-4 py-2 text-sm font-semibold text-[#6C5656] transition hover:bg-[#FFE5E2]"
+            className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${darkMode ? 'border-[#3f3f46] bg-[#1c1d22] text-[#a1a1aa] hover:bg-[#18181b]' : 'border-[#FFE5E2] bg-[#FFFDF9] text-[#6C5656] hover:bg-[#FFE5E2]'}`}
           >
             Auto-Archive Rules ⚙️
           </button>
@@ -93,8 +95,8 @@ export default function ArchiveTab({
           </table>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-[#FFE5E2] bg-[#FFFDF9] p-4 text-sm text-[#6C5656]">
-          <p className="font-semibold text-[#4E3B3B]">Active jobs ready for cleanup</p>
+        <div className={`mt-4 rounded-2xl border p-4 text-sm ${darkMode ? 'border-[#2d2e36] bg-[#1c1d22] text-[#f4f4f5]' : 'border-[#FFE5E2] bg-[#FFFDF9] text-[#6C5656]'}`}>
+          <p className={`font-semibold ${darkMode ? 'text-[#f4f4f5]' : 'text-[#4E3B3B]'}`}>Active jobs ready for cleanup</p>
           <p className="mt-1">{jobs.filter((job) => !job.is_archived).length} active applications currently tracked.</p>
         </div>
       </section>
@@ -102,28 +104,28 @@ export default function ArchiveTab({
       {isModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4 backdrop-blur-sm">
           <div className={`w-full max-w-lg rounded-[30px] border p-6 shadow-xl ${theme.card}`}>
-            <div className="flex items-center justify-between border-b border-[#FFE5E2] pb-3">
-              <h4 className="text-lg font-semibold text-[#4E3B3B]">Auto-Archive Rules</h4>
-              <button type="button" onClick={() => setIsModalOpen(false)} className="text-sm text-[#8D6F6F] hover:text-[#4E3B3B]">
+            <div className={`flex items-center justify-between border-b pb-3 ${theme.tableHeader}`}>
+              <h4 className={`text-lg font-semibold ${darkMode ? 'text-[#f4f4f5]' : 'text-[#4E3B3B]'}`}>Auto-Archive Rules</h4>
+              <button type="button" onClick={() => setIsModalOpen(false)} className={`text-sm ${darkMode ? 'text-[#a1a1aa] hover:text-[#f4f4f5]' : 'text-[#8D6F6F] hover:text-[#4E3B3B]'}`}>
                 ✕
               </button>
             </div>
 
-            <div className="mt-4 space-y-3 text-sm text-[#6C5656]">
+            <div className={`mt-4 space-y-3 text-sm ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>
               <label className={`flex items-center gap-3 rounded-2xl border p-3 ${theme.innerCard}`}>
-                <input type="checkbox" checked={rules.rejected} onChange={() => toggleRule('rejected')} className="h-4 w-4 rounded border-[#FFB7B2] text-[#FFB7B2] focus:ring-[#FFB7B2]" />
+                <input type="checkbox" checked={rules.rejected} onChange={() => toggleRule('rejected')} className={`h-4 w-4 rounded ${darkMode ? 'border-[#3f3f46] text-[#f87171] focus:ring-[#f87171]' : 'border-[#FFB7B2] text-[#FFB7B2] focus:ring-[#FFB7B2]'}`} />
                 <span>Archive all Rejected applications</span>
               </label>
               <label className={`flex items-center gap-3 rounded-2xl border p-3 ${theme.innerCard}`}>
-                <input type="checkbox" checked={rules.olderThanOneWeek} onChange={() => toggleRule('olderThanOneWeek')} className="h-4 w-4 rounded border-[#FFB7B2] text-[#FFB7B2] focus:ring-[#FFB7B2]" />
+                <input type="checkbox" checked={rules.olderThanOneWeek} onChange={() => toggleRule('olderThanOneWeek')} className={`h-4 w-4 rounded ${darkMode ? 'border-[#3f3f46] text-[#f87171] focus:ring-[#f87171]' : 'border-[#FFB7B2] text-[#FFB7B2] focus:ring-[#FFB7B2]'}`} />
                 <span>Archive applications older than 1 week</span>
               </label>
               <label className={`flex items-center gap-3 rounded-2xl border p-3 ${theme.innerCard}`}>
-                <input type="checkbox" checked={rules.olderThanOneMonth} onChange={() => toggleRule('olderThanOneMonth')} className="h-4 w-4 rounded border-[#FFB7B2] text-[#FFB7B2] focus:ring-[#FFB7B2]" />
+                <input type="checkbox" checked={rules.olderThanOneMonth} onChange={() => toggleRule('olderThanOneMonth')} className={`h-4 w-4 rounded ${darkMode ? 'border-[#3f3f46] text-[#f87171] focus:ring-[#f87171]' : 'border-[#FFB7B2] text-[#FFB7B2] focus:ring-[#FFB7B2]'}`} />
                 <span>Archive applications older than 1 month</span>
               </label>
               <label className={`flex items-center gap-3 rounded-2xl border p-3 ${theme.innerCard}`}>
-                <input type="checkbox" checked={rules.olderThanThreeMonths} onChange={() => toggleRule('olderThanThreeMonths')} className="h-4 w-4 rounded border-[#FFB7B2] text-[#FFB7B2] focus:ring-[#FFB7B2]" />
+                <input type="checkbox" checked={rules.olderThanThreeMonths} onChange={() => toggleRule('olderThanThreeMonths')} className={`h-4 w-4 rounded ${darkMode ? 'border-[#3f3f46] text-[#f87171] focus:ring-[#f87171]' : 'border-[#FFB7B2] text-[#FFB7B2] focus:ring-[#FFB7B2]'}`} />
                 <span>Archive applications older than 3 months</span>
               </label>
             </div>
@@ -132,7 +134,7 @@ export default function ArchiveTab({
               type="button"
               onClick={handleRunCleanup}
               disabled={cleanupLoading}
-              className="mt-6 w-full rounded-2xl bg-[#FFB7B2] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#FFA9A0] disabled:opacity-70"
+              className={`mt-6 w-full rounded-2xl px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-70 ${darkMode ? 'bg-[#f87171] hover:bg-[#ef4444]' : 'bg-[#FFB7B2] hover:bg-[#FFA9A0]'}`}
             >
               {cleanupLoading ? 'Working…' : 'Run Cleanup'}
             </button>

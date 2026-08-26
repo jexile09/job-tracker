@@ -1,6 +1,41 @@
 export type WorkType = 'remote' | 'hybrid' | 'onsite';
 export type JobStatus = 'applied' | 'interview' | 'offered' | 'rejected';
-export type ActiveTab = 'dashboard' | 'archive' | 'calendar' | 'settings';
+export type ActiveTab = 'dashboard' | 'archive' | 'calendar' | 'settings' | 'spreadsheet';
+export type SalaryUnit = 'year' | 'hour' | 'salary';
+export type SalaryCurrency = 'USD' | 'EUR' | 'GBP' | 'CAD' | 'AUD' | 'INR' | 'JPY';
+export type DashboardSortOption =
+  | 'salary_desc'
+  | 'salary_asc'
+  | 'location_asc'
+  | 'location_desc'
+  | 'name_asc'
+  | 'name_desc'
+  | 'applied_desc'
+  | 'applied_asc';
+
+export type DashboardPreferences = {
+  showOnlyOpen: boolean;
+  compactView: boolean;
+  hideDetailsByDefault: boolean;
+  showSalaryColumn: boolean;
+  showLocationColumn: boolean;
+  showOpenApplicationsCard: boolean;
+  showUpcomingInterviewsCard: boolean;
+  showArchivedCard: boolean;
+  showStatusBreakdown: boolean;
+  dashboardSort: DashboardSortOption;
+};
+
+export type ThemeStyles = {
+  bg: string;
+  card: string;
+  innerCard: string;
+  input: string;
+  label: string;
+  tableHeader: string;
+  tableRow: string;
+};
+
 export type AuthSession = {
   user?: {
     id?: string;
@@ -21,11 +56,14 @@ export type JobRecord = {
   interview_date?: string | null;
   deadline_date?: string | null;
   is_archived?: boolean | null;
-  
-  // 🌟 New Fields Added Here
+
   salary_range?: string | null;
+  salary_value?: number | null;
+  salary_unit?: SalaryUnit | null;
+  salary_currency?: SalaryCurrency | null;
   work_type?: WorkType | null;
   location?: string | null;
+  tech_stack?: string | null;
 
   resume_storage_path: string | null;
   cover_letter_storage_path: string | null;
@@ -42,9 +80,11 @@ export type FormState = {
   applied_date: string;
   interview_date: string;
   deadline_date: string;
-  
-  // 🌟 New Form Fields
-  salary_range: string;
+  salary_value?: string;
+  salary_unit?: SalaryUnit;
+  salary_currency?: SalaryCurrency;
   work_type: WorkType;
   location: string;
+  resume_storage_path?: string;
+  cover_letter_storage_path?: string;
 };

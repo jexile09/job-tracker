@@ -1,14 +1,61 @@
 'use client';
 
+import type { FormEvent } from 'react';
+import type { ThemeStyles } from '../../types';
+
+type CustomizationCheckboxProps = {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  description: string;
+  darkMode: boolean;
+};
+
+function CustomizationCheckbox({ label, checked, onChange, description, darkMode }: CustomizationCheckboxProps) {
+  return (
+    <label className={`flex items-start justify-between gap-3 rounded-2xl border p-3 text-sm ${darkMode ? 'border-[#2d2e36]' : 'border-gray-200'}`}>
+      <div className="min-w-0">
+        <p className={`font-semibold ${darkMode ? 'text-[#f4f4f5]' : ''}`}>{label}</p>
+        <p className={`text-xs ${darkMode ? 'text-[#a1a1aa]' : 'opacity-70'}`}>{description}</p>
+      </div>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className={`mt-1 h-4 w-4 ${darkMode ? 'accent-[#f87171]' : ''}`}
+      />
+    </label>
+  );
+}
+
 type SettingsTabProps = {
-  theme: any;
+  theme: ThemeStyles;
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
   newPassword: string;
   setNewPassword: (val: string) => void;
-  handlePasswordChange: (e: any) => void;
+  handlePasswordChange: (e: FormEvent<HTMLFormElement>) => void;
   userEmail?: string | null;
   handleSignOut: () => void;
+  showOnlyOpen: boolean;
+  setShowOnlyOpen: (val: boolean) => void;
+  compactView: boolean;
+  setCompactView: (val: boolean) => void;
+  hideDetailsByDefault: boolean;
+  setHideDetailsByDefault: (val: boolean) => void;
+  showSalaryColumn: boolean;
+  setShowSalaryColumn: (val: boolean) => void;
+  showLocationColumn: boolean;
+  setShowLocationColumn: (val: boolean) => void;
+  showOpenApplicationsCard: boolean;
+  setShowOpenApplicationsCard: (val: boolean) => void;
+  showUpcomingInterviewsCard: boolean;
+  setShowUpcomingInterviewsCard: (val: boolean) => void;
+  showArchivedCard: boolean;
+  setShowArchivedCard: (val: boolean) => void;
+  showStatusBreakdown: boolean;
+  setShowStatusBreakdown: (val: boolean) => void;
+  onResetDashboardCustomization: () => void;
 };
 
 export default function SettingsTab({
@@ -20,53 +67,157 @@ export default function SettingsTab({
   handlePasswordChange,
   userEmail,
   handleSignOut,
+  showOnlyOpen,
+  setShowOnlyOpen,
+  compactView,
+  setCompactView,
+  hideDetailsByDefault,
+  setHideDetailsByDefault,
+  showSalaryColumn,
+  setShowSalaryColumn,
+  showLocationColumn,
+  setShowLocationColumn,
+  showOpenApplicationsCard,
+  setShowOpenApplicationsCard,
+  showUpcomingInterviewsCard,
+  setShowUpcomingInterviewsCard,
+  showArchivedCard,
+  setShowArchivedCard,
+  showStatusBreakdown,
+  setShowStatusBreakdown,
+  onResetDashboardCustomization,
 }: SettingsTabProps) {
+  const settingButton = (active: boolean) =>
+    `shrink-0 rounded-xl px-4 py-2 text-xs font-semibold text-white ${active ? 'bg-[#f87171]' : 'bg-[#71717A]'}`;
+  const secondaryButton = darkMode
+    ? 'border-[#3f3f46] bg-[#1c1d22] text-[#a1a1aa] hover:bg-[#18181b]'
+    : 'border-[#FFD9D4] bg-[#FFF5F5] text-[#A95565]';
+
   return (
-    <section className={`rounded-[32px] border p-6 shadow-md ${theme.card}`}>
-      <h3 className="text-2xl font-semibold">Settings ⚙️</h3>
-      <div className="mt-6 max-w-md space-y-4">
-        <div className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${theme.innerCard}`}>
-          <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold">Signed in as</div>
-            <div className="text-xs opacity-70">{userEmail || 'No account loaded'}</div>
+    <section className={`flex h-full flex-col justify-between rounded-[32px] border p-6 shadow-md ${theme.card}`}>
+      <div>
+        <h3 className="text-2xl font-semibold">Settings</h3>
+        <div className="mt-6 space-y-4">
+          <div className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${theme.innerCard}`}>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold">Signed in as</div>
+              <div className="text-xs opacity-70">{userEmail || 'No account loaded'}</div>
+            </div>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className={`shrink-0 rounded-xl border px-3 py-2 text-xs font-semibold ${secondaryButton}`}
+            >
+              Sign out
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="shrink-0 rounded-xl border border-[#FFD9D4] bg-[#FFF5F5] px-3 py-2 text-xs font-semibold text-[#A95565]"
-          >
-            Sign out
-          </button>
-        </div>
 
-        <div className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${theme.innerCard}`}>
-          <div className="min-w-0 flex-1">
-            <div className="font-semibold text-sm">Dark Mode 🌙</div>
-            <div className="text-xs opacity-70">Deep dark charcoal theme</div>
+          <div className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${theme.innerCard}`}>
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold text-sm">Dark Mode</div>
+              <div className="text-xs opacity-70">Use a softer dark tone across the app.</div>
+            </div>
+            <button type="button" onClick={() => setDarkMode(!darkMode)} className={settingButton(darkMode)}>
+              {darkMode ? 'Enabled' : 'Disabled'}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setDarkMode(!darkMode)}
-            className={`shrink-0 rounded-xl px-4 py-2 text-xs font-semibold text-white ${darkMode ? 'bg-[#FFB7B2]' : 'bg-[#71717A]'}`}
-          >
-            {darkMode ? 'Enabled' : 'Disabled'}
-          </button>
-        </div>
 
-        <form onSubmit={handlePasswordChange} className={`space-y-3 rounded-2xl border p-4 ${theme.innerCard}`}>
-          <h4 className="font-semibold text-sm">Change Password 🔑</h4>
-          <input
-            type="password"
-            required
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="New password"
-            className={`w-full rounded-xl border px-3 py-2 text-xs outline-none ${theme.input}`}
-          />
-          <button type="submit" className="w-full rounded-xl bg-[#FFB7B2] py-2 text-xs font-semibold text-white">
-            Update Password
-          </button>
-        </form>
+          <details className={`rounded-2xl border p-4 ${theme.innerCard}`} open>
+            <summary className="cursor-pointer text-sm font-semibold">Dashboard Customization</summary>
+            <p className="mt-2 text-xs opacity-70">
+              Choose exactly what appears on your dashboard. These preferences sync with your account.
+            </p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <CustomizationCheckbox
+                label="Show only open jobs"
+                description="Hide rejected items in the dashboard list."
+                checked={showOnlyOpen}
+                onChange={setShowOnlyOpen}
+                darkMode={darkMode}
+              />
+              <CustomizationCheckbox
+                label="Compact rows"
+                description="Use tighter spacing in dashboard table rows."
+                checked={compactView}
+                onChange={setCompactView}
+                darkMode={darkMode}
+              />
+              <CustomizationCheckbox
+                label="Hide details by default"
+                description="Start each row collapsed until opened."
+                checked={hideDetailsByDefault}
+                onChange={setHideDetailsByDefault}
+                darkMode={darkMode}
+              />
+              <CustomizationCheckbox
+                label="Show salary column"
+                description="Display salary in the dashboard table."
+                checked={showSalaryColumn}
+                onChange={setShowSalaryColumn}
+                darkMode={darkMode}
+              />
+              <CustomizationCheckbox
+                label="Show location column"
+                description="Display location in the dashboard table."
+                checked={showLocationColumn}
+                onChange={setShowLocationColumn}
+                darkMode={darkMode}
+              />
+              <CustomizationCheckbox
+                label="Show open applications card"
+                description="Display top summary card for open applications."
+                checked={showOpenApplicationsCard}
+                onChange={setShowOpenApplicationsCard}
+                darkMode={darkMode}
+              />
+              <CustomizationCheckbox
+                label="Show upcoming interviews card"
+                description="Display top summary card for upcoming interviews."
+                checked={showUpcomingInterviewsCard}
+                onChange={setShowUpcomingInterviewsCard}
+                darkMode={darkMode}
+              />
+              <CustomizationCheckbox
+                label="Show archived card"
+                description="Display top summary card for archived jobs."
+                checked={showArchivedCard}
+                onChange={setShowArchivedCard}
+                darkMode={darkMode}
+              />
+              <CustomizationCheckbox
+                label="Show status breakdown"
+                description="Show applied, interview, offered, and rejected counts."
+                checked={showStatusBreakdown}
+                onChange={setShowStatusBreakdown}
+                darkMode={darkMode}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={onResetDashboardCustomization}
+              className={`mt-4 w-full rounded-xl border px-3 py-2 text-xs font-semibold ${secondaryButton}`}
+            >
+              Reset dashboard customization
+            </button>
+          </details>
+
+          <form onSubmit={handlePasswordChange} className={`space-y-3 rounded-2xl border p-4 ${theme.innerCard}`}>
+            <h4 className="font-semibold text-sm">Change Password</h4>
+            <input
+              type="password"
+              required
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="New password"
+              className={`w-full rounded-xl border px-3 py-2 text-xs outline-none ${theme.input}`}
+            />
+            <button type="submit" className={`w-full rounded-xl py-2 text-xs font-semibold text-white ${darkMode ? 'bg-[#f87171] hover:bg-[#ef4444]' : 'bg-[#FFB7B2]'}`}>
+              Update Password
+            </button>
+          </form>
+        </div>
       </div>
     </section>
   );
