@@ -259,8 +259,9 @@ export default function JobTracker() {
   // Row Level Security (RLS, database-level authorization policy engine that filters rows per user) must permit SELECT when user_id matches the authentication subject stored in the Supabase session token.
   const fetchJobs = useCallback(async (userId: string) => {
     if (!supabase) return;
-    const { data } = await supabase.from('jobs').select('*').eq('user_id', userId).order('applied_date', { ascending: false });
+    const { data, error } = await supabase.from('jobs').select('*').eq('user_id', userId).order('applied_date', { ascending: false });
     if (data) setJobs(data as JobRecord[]);
+    if (error) setMessage({ type: 'error', text: `Couldn't load your applications: ${error.message}` });
   }, []);
 
   // Preference synchronization read (remote JSON retrieval for per-user customization state) loads server-backed settings so multiple devices converge on the same dashboard configuration.
@@ -684,10 +685,10 @@ export default function JobTracker() {
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <Image
-                src="/Appli-Log.ico"
+                src={darkMode ? '/Appli-Log_DarkMode.png' : '/Appli-Log.png'}
                 alt="Appli-Log logo"
-                width={64}
-                height={64}
+                width={128}
+                height={128}
                 className="mb-3 h-14 w-14 rounded-full object-cover sm:h-16 sm:w-16"
               />
               <p className="text-sm uppercase tracking-[0.24em] text-[#E07A5F]">Welcome back</p>
