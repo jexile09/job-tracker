@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Image from 'next/image';
 import type { JobRecord, JobStatus, ThemeStyles } from '../../types';
 import { formatSalary } from '../../lib/salary';
 
@@ -39,7 +40,6 @@ export default function SpreadsheetTab({
   const [archiveFilter, setArchiveFilter] = useState<'all' | 'active' | 'archived'>('all');
   const [selectedJobForDetails, setSelectedJobForDetails] = useState<JobRecord | null>(null);
 
-  // Multi-stage filter pipeline (sequential row-elimination process across status filter, archive-state filter, and substring text search) produces the exact dataset shown in the table and exported to CSV.
   const filteredJobs = useMemo(() => {
     const query = search.trim().toLowerCase();
     return jobs.filter((job) => {
@@ -58,7 +58,6 @@ export default function SpreadsheetTab({
   const archivedRows = filteredJobs.filter((job) => job.is_archived);
 
   const downloadCsv = () => {
-    // CSV serialization (conversion from in-memory tabular arrays into comma-separated plain-text records) preserves quote-escaping rules so delimiter characters inside notes do not corrupt column alignment.
     const headers = [
       'Company',
       'Status',
@@ -87,12 +86,11 @@ export default function SpreadsheetTab({
       job.application_link || '',
     ]);
 
-    const csv = [headers, ...rows]
+    const csvContent = [headers, ...rows]
       .map((row) => row.map(formatCsvValue).join(','))
       .join('\n');
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    // Object URL lifecycle (temporary browser-memory URL allocation followed by explicit release) enables file download behavior without requiring a dedicated backend export endpoint.
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
@@ -108,50 +106,52 @@ export default function SpreadsheetTab({
   };
 
   const renderTable = (rows: JobRecord[], title: string) => (
-    <div className={`rounded-[28px] border p-4 text-sm ${theme.innerCard}`}>
+    <div className={`w-full rounded-[28px] border p-4 text-sm ${theme.innerCard}`}>
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-lg font-semibold">{title}</h3>
         <span className="text-xs opacity-70">{rows.length} item(s)</span>
       </div>
 
-      <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-        <table className={`min-w-[880px] text-left whitespace-nowrap ${darkMode ? 'text-[#f4f4f5]' : 'text-[#4E3B3B]'}`}>
+      <div className="w-full overflow-x-auto [-webkit-overflow-scrolling:touch]">
+        <table className={`w-full table-auto text-left ${darkMode ? 'text-[#f4f4f5]' : 'text-[#4E3B3B]'}`}>
           <thead>
             <tr className={`border-b ${theme.tableHeader}`}>
-              <th className="px-3 py-2">Company</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Applied</th>
-              <th className="px-3 py-2">Interview</th>
-              <th className="px-3 py-2">Salary</th>
-              <th className="px-3 py-2">Location</th>
-              <th className="px-3 py-2">Notes</th>
+              <th className="w-2/12 px-3 py-3 font-semibold">Company</th>
+              <th className="w-1/12 px-3 py-3 font-semibold">Status</th>
+              <th className="w-2/12 px-3 py-3 font-semibold">Applied</th>
+              <th className="w-3/12 px-3 py-3 font-semibold">Interview</th>
+              <th className="w-2/12 px-3 py-3 font-semibold">Salary</th>
+              <th className="w-2/12 px-3 py-3 font-semibold">Location</th>
+              <th className="w-1/12 px-3 py-3 text-right font-semibold">Notes</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((job) => (
               <tr key={job.id} className={`border-b ${theme.tableRow}`}>
-                <td className="px-3 py-3 font-semibold whitespace-nowrap">{job.company_name}</td>
-                <td className="px-3 py-3 text-xs uppercase tracking-[0.1em]">
+                <td className="px-3 py-3.5 font-semibold">{job.company_name}</td>
+                <td className="px-3 py-3.5 text-xs uppercase tracking-[0.1em]">
                   <span className={`rounded-full px-2.5 py-1 font-semibold ${statusStyles[job.status]}`}>{job.status}</span>
                 </td>
-                <td className={`px-3 py-3 text-xs whitespace-nowrap ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>{job.applied_date}</td>
-                <td className={`px-3 py-3 text-xs whitespace-nowrap ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>
-                  <div className="flex items-center gap-2">
-                    <span className="truncate max-w-[320px]">{formatInterviewDateTime(job.interview_date)}</span>
+                <td className={`px-3 py-3.5 text-xs ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>{job.applied_date}</td>
+                <td className={`px-3 py-3.5 text-xs ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span>{formatInterviewDateTime(job.interview_date)}</span>
                     {job.interview_date ? (
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${getWeekdayChipStyle(job.interview_date)}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${getWeekdayChipStyle(job.interview_date)}`}>
                         {getWeekdayLabel(job.interview_date)}
                       </span>
                     ) : null}
                   </div>
                 </td>
-                <td className={`px-3 py-3 text-xs whitespace-nowrap ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>{formatSalary(job.salary_value, job.salary_unit, job.salary_currency) || '—'}</td>
-                <td className={`px-3 py-3 text-xs whitespace-nowrap ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>{job.location || '—'}</td>
-                <td className={`px-3 py-3 text-xs whitespace-nowrap max-w-[320px] ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>
+                <td className={`px-3 py-3.5 text-xs ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>
+                  {formatSalary(job.salary_value, job.salary_unit, job.salary_currency) || '—'}
+                </td>
+                <td className={`px-3 py-3.5 text-xs ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>{job.location || '—'}</td>
+                <td className="px-3 py-3.5 text-right">
                   <button
                     type="button"
                     onClick={() => setSelectedJobForDetails(job)}
-                    className={`rounded-xl border px-2.5 py-1 text-xs font-semibold ${theme.input}`}
+                    className={`rounded-xl border px-3 py-1 text-xs font-semibold whitespace-nowrap ${theme.input}`}
                   >
                     Show Details
                   </button>
@@ -258,9 +258,16 @@ export default function SpreadsheetTab({
               <button
                 type="button"
                 onClick={() => setSelectedJobForDetails(null)}
-                className={`rounded-xl border px-3 py-1.5 text-xs font-semibold ${theme.input}`}
+                className="rounded-lg p-1 transition hover:opacity-75"
+                aria-label="Close dialog"
               >
-                Close
+                <Image
+                  src="/icons/Close.png"
+                  alt="Close icon"
+                  width={20}
+                  height={20}
+                  className="h-5 w-5 object-contain"
+                />
               </button>
             </div>
 

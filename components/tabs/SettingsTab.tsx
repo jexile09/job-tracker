@@ -13,16 +13,20 @@ type CustomizationCheckboxProps = {
 
 function CustomizationCheckbox({ label, checked, onChange, description, darkMode }: CustomizationCheckboxProps) {
   return (
-    <label className={`flex items-start justify-between gap-3 rounded-2xl border p-3 text-sm ${darkMode ? 'border-[#2d2e36]' : 'border-gray-200'}`}>
+    <label
+      className={`flex items-start justify-between gap-3 rounded-2xl border p-3 text-sm transition ${
+        darkMode ? 'border-[#2d2e36] bg-[#18181b]/50 hover:bg-[#18181b]' : 'border-gray-200 bg-white/60 hover:bg-white'
+      }`}
+    >
       <div className="min-w-0">
-        <p className={`font-semibold ${darkMode ? 'text-[#f4f4f5]' : ''}`}>{label}</p>
+        <p className={`font-semibold ${darkMode ? 'text-[#f4f4f5]' : 'text-[#4E3B3B]'}`}>{label}</p>
         <p className={`text-xs ${darkMode ? 'text-[#a1a1aa]' : 'opacity-70'}`}>{description}</p>
       </div>
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className={`mt-1 h-4 w-4 ${darkMode ? 'accent-[#f87171]' : ''}`}
+        className={`mt-1 h-4 w-4 rounded ${darkMode ? 'accent-[#f87171]' : 'accent-[#FFB7B2]'}`}
       />
     </label>
   );
@@ -122,84 +126,110 @@ export default function SettingsTab({
             </button>
           </div>
 
-          <details className={`rounded-2xl border p-4 ${theme.innerCard}`} open>
+          <details className={`rounded-2xl border p-5 ${theme.innerCard}`} open>
             <summary className="cursor-pointer text-sm font-semibold">Dashboard Customization</summary>
-            <p className="mt-2 text-xs opacity-70">
-              Choose exactly what appears on your dashboard. These preferences sync with your account.
+            <p className="mt-1 text-xs opacity-70">
+              Configure which sections, metrics, and table columns display on the main dashboard.
             </p>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <CustomizationCheckbox
-                label="Show only open jobs"
-                description="Hide rejected items in the dashboard list."
-                checked={showOnlyOpen}
-                onChange={setShowOnlyOpen}
-                darkMode={darkMode}
-              />
-              <CustomizationCheckbox
-                label="Compact rows"
-                description="Use tighter spacing in dashboard table rows."
-                checked={compactView}
-                onChange={setCompactView}
-                darkMode={darkMode}
-              />
-              <CustomizationCheckbox
-                label="Hide details by default"
-                description="Start each row collapsed until opened."
-                checked={hideDetailsByDefault}
-                onChange={setHideDetailsByDefault}
-                darkMode={darkMode}
-              />
-              <CustomizationCheckbox
-                label="Show salary column"
-                description="Display salary in the dashboard table."
-                checked={showSalaryColumn}
-                onChange={setShowSalaryColumn}
-                darkMode={darkMode}
-              />
-              <CustomizationCheckbox
-                label="Show location column"
-                description="Display location in the dashboard table."
-                checked={showLocationColumn}
-                onChange={setShowLocationColumn}
-                darkMode={darkMode}
-              />
-              <CustomizationCheckbox
-                label="Show open applications card"
-                description="Display top summary card for open applications."
-                checked={showOpenApplicationsCard}
-                onChange={setShowOpenApplicationsCard}
-                darkMode={darkMode}
-              />
-              <CustomizationCheckbox
-                label="Show upcoming interviews card"
-                description="Display top summary card for upcoming interviews."
-                checked={showUpcomingInterviewsCard}
-                onChange={setShowUpcomingInterviewsCard}
-                darkMode={darkMode}
-              />
-              <CustomizationCheckbox
-                label="Show archived card"
-                description="Display top summary card for archived jobs."
-                checked={showArchivedCard}
-                onChange={setShowArchivedCard}
-                darkMode={darkMode}
-              />
-              <CustomizationCheckbox
-                label="Show status breakdown"
-                description="Show applied, interview, offered, and rejected counts."
-                checked={showStatusBreakdown}
-                onChange={setShowStatusBreakdown}
-                darkMode={darkMode}
-              />
+            <div className="mt-5 space-y-5">
+              {/* Category 1: Summary Metric Cards */}
+              <div>
+                <p className="text-xs font-bold tracking-wider uppercase opacity-80 mb-2.5">
+                  Header Summary Cards
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <CustomizationCheckbox
+                    label="Show open applications card"
+                    description="Display the top card tracking active applications."
+                    checked={showOpenApplicationsCard}
+                    onChange={setShowOpenApplicationsCard}
+                    darkMode={darkMode}
+                  />
+                  <CustomizationCheckbox
+                    label="Show upcoming interviews card"
+                    description="Display the top card tracking scheduled interviews."
+                    checked={showUpcomingInterviewsCard}
+                    onChange={setShowUpcomingInterviewsCard}
+                    darkMode={darkMode}
+                  />
+                  <CustomizationCheckbox
+                    label="Show archived card"
+                    description="Display the top card tracking archived applications."
+                    checked={showArchivedCard}
+                    onChange={setShowArchivedCard}
+                    darkMode={darkMode}
+                  />
+                  <CustomizationCheckbox
+                    label="Show status breakdown"
+                    description="Display counts for Applied, Interview, Offered, and Rejected."
+                    checked={showStatusBreakdown}
+                    onChange={setShowStatusBreakdown}
+                    darkMode={darkMode}
+                  />
+                </div>
+              </div>
+
+              {/* Category 2: Table Columns */}
+              <div className="border-t pt-4 border-gray-200/50 dark:border-gray-800">
+                <p className="text-xs font-bold tracking-wider uppercase opacity-80 mb-2.5">
+                  Dashboard Table Columns
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <CustomizationCheckbox
+                    label="Show salary column"
+                    description="Display salary compensation in the table."
+                    checked={showSalaryColumn}
+                    onChange={setShowSalaryColumn}
+                    darkMode={darkMode}
+                  />
+                  <CustomizationCheckbox
+                    label="Show location column"
+                    description="Display job work location in the table."
+                    checked={showLocationColumn}
+                    onChange={setShowLocationColumn}
+                    darkMode={darkMode}
+                  />
+                </div>
+              </div>
+
+              {/* Category 3: Row Spacing & Filtering */}
+              <div className="border-t pt-4 border-gray-200/50 dark:border-gray-800">
+                <p className="text-xs font-bold tracking-wider uppercase opacity-80 mb-2.5">
+                  Table Layout & Filtering
+                </p>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <CustomizationCheckbox
+                    label="Compact rows"
+                    description="Use tighter vertical row padding."
+                    checked={compactView}
+                    onChange={setCompactView}
+                    darkMode={darkMode}
+                  />
+                  <CustomizationCheckbox
+                    label="Hide details by default"
+                    description="Keep interview notes collapsed on load."
+                    checked={hideDetailsByDefault}
+                    onChange={setHideDetailsByDefault}
+                    darkMode={darkMode}
+                  />
+                  <CustomizationCheckbox
+                    label="Show only open jobs"
+                    description="Hide rejected applications from the list."
+                    checked={showOnlyOpen}
+                    onChange={setShowOnlyOpen}
+                    darkMode={darkMode}
+                  />
+                </div>
+              </div>
             </div>
 
             <button
               type="button"
               onClick={onResetDashboardCustomization}
-              className={`mt-4 w-full rounded-xl border px-3 py-2 text-xs font-semibold ${secondaryButton}`}
+              className={`mt-5 w-full rounded-xl border px-3 py-2 text-xs font-semibold ${secondaryButton}`}
             >
-              Reset dashboard customization
+              Reset dashboard customization to defaults
             </button>
           </details>
 
@@ -213,7 +243,12 @@ export default function SettingsTab({
               placeholder="New password"
               className={`w-full rounded-xl border px-3 py-2 text-xs outline-none ${theme.input}`}
             />
-            <button type="submit" className={`w-full rounded-xl py-2 text-xs font-semibold text-white ${darkMode ? 'bg-[#f87171] hover:bg-[#ef4444]' : 'bg-[#FFB7B2]'}`}>
+            <button
+              type="submit"
+              className={`w-full rounded-xl py-2 text-xs font-semibold text-white ${
+                darkMode ? 'bg-[#f87171] hover:bg-[#ef4444]' : 'bg-[#FFB7B2]'
+              }`}
+            >
               Update Password
             </button>
           </form>

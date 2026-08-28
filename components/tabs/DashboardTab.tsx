@@ -2,6 +2,7 @@
 
 import { Fragment, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
+import Image from 'next/image';
 import type {
   DashboardSortOption,
   FormState,
@@ -87,19 +88,19 @@ export default function DashboardTab({
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
 
   const workTypeBadges = darkMode ? workTypeBadgesDark : workTypeBadgesLight;
-
-  const buttonStyle = compactMode ? 'text-[10px] px-2.5 py-1' : 'text-xs px-3 py-1.5';
-  const rowSpacing = compactMode ? 'py-2' : 'py-3';
+  const buttonStyle = compactMode ? 'text-[11px] px-2.5 py-1' : 'text-xs px-3 py-1.5';
+  const rowSpacing = compactMode ? 'py-2' : 'py-3.5';
   const formTitle = editingJobId ? 'Edit Application' : 'Add New Application';
   const selectedCurrency: SalaryCurrency = form.salary_currency || 'USD';
 
-  // Row expansion state machine (record-indexed visibility map for collapsible detail panels) enables independent open and close behavior for each table row without cross-row coupling.
   const toggleRow = (id: number) => {
     setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+
   const detailsOpen = (job: JobRecord) => {
     return expandedRows[job.id] ?? !hideDetailsByDefault;
   };
+
   const detailsColSpan = 5 + Number(showSalaryColumn) + Number(showLocationColumn);
 
   return (
@@ -293,15 +294,28 @@ export default function DashboardTab({
               <button
                 type="submit"
                 disabled={submitting}
-                className={`w-full rounded-2xl py-3 text-sm font-semibold text-white transition ${darkMode ? 'bg-[#f87171] hover:bg-[#ef4444]' : 'bg-[#FFB7B2] hover:bg-[#FFA9A0]'}`}
+                className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white transition ${
+                  darkMode ? 'bg-[#f87171] hover:bg-[#ef4444]' : 'bg-[#FFB7B2] hover:bg-[#FFA9A0]'
+                }`}
               >
-                {submitting ? 'Saving...' : editingJobId ? 'Save changes' : 'Add Application'}
+                <span>{submitting ? 'Saving...' : editingJobId ? 'Save changes' : 'Add Application'}</span>
+                <Image
+                  src="/icons/Save.png"
+                  alt="Save icon"
+                  width={16}
+                  height={16}
+                  className="h-4 w-4 object-contain"
+                />
               </button>
               {editingJobId ? (
                 <button
                   type="button"
                   onClick={onCancelEdit}
-                  className={`w-full rounded-2xl border py-3 text-sm font-semibold transition ${darkMode ? 'border-[#3f3f46] bg-transparent text-[#a1a1aa] hover:bg-[#18181b]' : 'border-[#94A3B8] bg-transparent text-[#94A3B8] hover:bg-[#1F2937]/10'}`}
+                  className={`w-full rounded-2xl border py-3 text-sm font-semibold transition ${
+                    darkMode
+                      ? 'border-[#3f3f46] bg-transparent text-[#a1a1aa] hover:bg-[#18181b]'
+                      : 'border-[#94A3B8] bg-transparent text-[#94A3B8] hover:bg-[#1F2937]/10'
+                  }`}
                 >
                   Cancel edit
                 </button>
@@ -337,7 +351,6 @@ export default function DashboardTab({
               onChange={(e) => setDashboardSort(e.target.value as DashboardSortOption)}
               className={`w-full sm:w-56 rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
             >
-              {/* Sort selector mapping (user-interface control that maps textual options to typed comparator modes) drives deterministic ordering in the container-level sorting pipeline. */}
               <option value="salary_desc">Salary: High to Low</option>
               <option value="salary_asc">Salary: Low to High</option>
               <option value="location_asc">Location: A to Z</option>
@@ -348,25 +361,24 @@ export default function DashboardTab({
               <option value="applied_asc">Applied: Oldest</option>
             </select>
           </div>
-          <div className="hidden text-xs text-[#8D6F6F] lg:block">Tap or click a row to expand interview notes and details.</div>
+          <div className="hidden text-xs text-[#8D6F6F] lg:block">Row actions stay horizontal for easy scanning.</div>
         </div>
 
         <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-          <table className="w-full min-w-[640px] lg:min-w-full text-left text-sm">
+          <table className="w-full text-left text-sm">
             <thead>
               <tr className={`border-b ${theme.tableHeader}`}>
-                <th className="px-3 py-3">Company</th>
-                {showSalaryColumn && <th className="hidden px-3 py-3 sm:table-cell">Salary</th>}
-                {showLocationColumn && <th className="hidden px-3 py-3 md:table-cell">Location</th>}
-                <th className="px-3 py-3">Applied</th>
-                <th className="px-3 py-3">Status</th>
-                <th className="hidden px-3 py-3 sm:table-cell">Calendar</th>
-                <th className="w-px px-3 py-3">Actions</th>
+                <th className="px-4 py-3 font-semibold">Company</th>
+                {showSalaryColumn && <th className="hidden px-4 py-3 font-semibold sm:table-cell">Salary</th>}
+                {showLocationColumn && <th className="hidden px-4 py-3 font-semibold md:table-cell">Location</th>}
+                <th className="px-4 py-3 font-semibold">Applied</th>
+                <th className="px-4 py-3 font-semibold">Status</th>
+                <th className="hidden px-4 py-3 font-semibold sm:table-cell">Calendar</th>
+                <th className="px-4 py-3 text-right font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredJobs.map((job) => {
-                // Event payload composition (structured calendar metadata assembly) combines notes, posting URL, and location fields into a normalized description string for external Google Calendar template URLs.
                 const workBadge = workTypeBadges[job.work_type || 'remote'];
                 const calendarDetails = [job.notes, job.application_link ? `Application: ${job.application_link}` : '']
                   .filter(Boolean)
@@ -381,7 +393,7 @@ export default function DashboardTab({
                 return (
                   <Fragment key={job.id}>
                     <tr className={`border-b ${theme.tableRow}`}>
-                      <td className="px-3 py-3">
+                      <td className={`px-4 ${rowSpacing}`}>
                         <div className="font-semibold">{job.company_name}</div>
                         <div
                           className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold tracking-[0.08em] uppercase ${workBadge.style}`}
@@ -400,57 +412,73 @@ export default function DashboardTab({
                         )}
                       </td>
                       {showSalaryColumn && (
-                        <td className={`hidden px-3 py-3 text-xs sm:table-cell ${darkMode ? 'text-[#a1a1aa]' : 'text-[#8C6418]'}`}>
+                        <td
+                          className={`hidden px-4 ${rowSpacing} text-xs sm:table-cell ${
+                            darkMode ? 'text-[#a1a1aa]' : 'text-[#8C6418]'
+                          }`}
+                        >
                           {formatSalary(job.salary_value, job.salary_unit, job.salary_currency) || '—'}
                         </td>
                       )}
-                      {showLocationColumn && <td className="hidden px-3 py-3 text-xs opacity-80 md:table-cell">{job.location || '—'}</td>}
-                      <td className="px-3 py-3 opacity-80">{formatAppliedDate(job.applied_date)}</td>
+                      {showLocationColumn && (
+                        <td className={`hidden px-4 ${rowSpacing} text-xs opacity-80 md:table-cell`}>
+                          {job.location || '—'}
+                        </td>
+                      )}
+                      <td className={`px-4 ${rowSpacing} opacity-80`}>{formatAppliedDate(job.applied_date)}</td>
 
-                      <td className="px-3 py-3">
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[job.status]}`}>{job.status}</span>
+                      <td className={`px-4 ${rowSpacing}`}>
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[job.status]}`}>
+                          {job.status}
+                        </span>
                       </td>
 
-                      <td className="hidden px-3 py-3 sm:table-cell">
+                      <td className={`hidden px-4 ${rowSpacing} sm:table-cell`}>
                         {job.interview_date && (
                           <a
                             href={calendarUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className={`rounded-xl px-2.5 py-1 text-xs font-semibold ${darkMode ? 'bg-[#18181b] text-[#f87171]' : 'bg-[#EAF4FF] text-[#3B629B]'}`}
+                            className={`rounded-xl px-2.5 py-1 text-xs font-semibold ${
+                              darkMode ? 'bg-[#18181b] text-[#f87171]' : 'bg-[#EAF4FF] text-[#3B629B]'
+                            }`}
                           >
                             Add Event
                           </a>
                         )}
                       </td>
 
-                      <td className="w-px px-3 py-3">
-                        <div className="flex flex-wrap items-center gap-2">
+                      <td className={`px-4 ${rowSpacing} text-right whitespace-nowrap`}>
+                        <div className="inline-flex flex-row items-center justify-end gap-1.5 flex-nowrap">
                           <button
                             type="button"
                             onClick={() => toggleRow(job.id)}
-                            className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-xl border ${buttonStyle} font-semibold ${theme.input}`}
+                            className={`rounded-xl border ${buttonStyle} font-semibold transition ${theme.input}`}
                           >
                             {detailsOpen(job) ? 'Hide Details' : 'Show Details'}
                           </button>
                           <button
                             type="button"
                             onClick={() => onEdit(job)}
-                            className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-xl border ${buttonStyle} font-semibold ${theme.input}`}
+                            className={`rounded-xl border ${buttonStyle} font-semibold transition ${theme.input}`}
                           >
                             Edit
                           </button>
                           <button
                             type="button"
                             onClick={() => handleToggleArchive(job.id, true)}
-                            className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-xl border ${buttonStyle} font-semibold ${theme.input}`}
+                            className={`rounded-xl border ${buttonStyle} font-semibold transition ${theme.input}`}
                           >
                             Archive
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDelete(job.id)}
-                            className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-xl border ${buttonStyle} font-semibold ${darkMode ? 'border-[#3f3f46] bg-[#1c1d22] text-[#a1a1aa] hover:bg-[#18181b]' : 'border-[#FFD9D4] bg-[#FFF5F5] text-[#A95565]'}`}
+                            className={`rounded-xl border ${buttonStyle} font-semibold transition ${
+                              darkMode
+                                ? 'border-[#3f3f46] bg-[#1c1d22] text-[#a1a1aa] hover:bg-[#18181b]'
+                                : 'border-[#FFD9D4] bg-[#FFF5F5] text-[#A95565]'
+                            }`}
                           >
                             Delete
                           </button>
@@ -459,20 +487,31 @@ export default function DashboardTab({
                     </tr>
                     {detailsOpen(job) && (
                       <tr className={`${theme.tableRow}`}>
-                        <td colSpan={detailsColSpan} className={`px-3 ${rowSpacing} ${theme.input}`}>
+                        <td colSpan={detailsColSpan} className={`px-4 ${rowSpacing} ${theme.input}`}>
                           <div className="grid gap-3 md:grid-cols-2">
                             <div className="space-y-1 rounded-2xl border p-3">
                               <p className="text-[11px] uppercase tracking-[0.24em] text-[#8D6F6F]">Interview</p>
                               <p className="text-xs">{formatInterviewDateTime(job.interview_date)}</p>
                               <p className="text-xs">
-                                {job.deadline_date ? `Deadline: ${formatAppliedDate(job.deadline_date)}` : 'No deadline set'}
+                                {job.deadline_date
+                                  ? `Deadline: ${formatAppliedDate(job.deadline_date)}`
+                                  : 'No deadline set'}
                               </p>
                             </div>
                             <div className="space-y-1 rounded-2xl border p-3">
                               <p className="text-[11px] uppercase tracking-[0.24em] text-[#8D6F6F]">Additional info</p>
-                              {job.notes ? <p className="text-xs">Notes: {job.notes}</p> : <p className="text-xs">No notes yet.</p>}
+                              {job.notes ? (
+                                <p className="text-xs">Notes: {job.notes}</p>
+                              ) : (
+                                <p className="text-xs">No notes yet.</p>
+                              )}
                               {job.application_link && (
-                                <a className="text-xs text-[#E07A5F] underline" href={job.application_link} target="_blank" rel="noreferrer">
+                                <a
+                                  className="text-xs text-[#E07A5F] underline"
+                                  href={job.application_link}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
                                   Open application link
                                 </a>
                               )}

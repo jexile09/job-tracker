@@ -26,6 +26,18 @@ button {
   font: inherit;
 }
 
+/* Invert native browser calendar and time picker icons in dark mode */
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+input[type="date"],
+input[type="datetime-local"] {
+  color-scheme: light dark;
+}
+
 @media (max-width: 768px) {
   input,
   select,
@@ -33,4 +45,3 @@ button {
     font-size: 16px;
   }
 }
-
