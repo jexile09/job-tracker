@@ -107,7 +107,7 @@ export default function DashboardTab({
     <>
       <section className={`rounded-[32px] border p-5 shadow-md sm:p-8 ${theme.card}`}>
         <h2 className="text-3xl font-semibold">{formTitle}</h2>
-        <form onSubmit={handleSubmit} className="mt-6 grid gap-4 lg:grid-cols-2">
+        <form onSubmit={handleSubmit} className="mt-6 grid gap-4 lg:grid-cols-2 items-start">
           <div className={`space-y-4 rounded-[28px] border p-5 ${theme.innerCard}`}>
             <div>
               <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Company name</label>
@@ -204,97 +204,112 @@ export default function DashboardTab({
             </div>
           </div>
 
-          <div className={`space-y-4 rounded-[28px] border p-5 ${theme.innerCard}`}>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Status</label>
-                <select
-                  name="status"
-                  value={form.status}
-                  onChange={handleInputChange}
-                  className={`w-full rounded-xl border px-2 py-2 text-xs outline-none ${theme.input}`}
-                >
-                  <option value="applied">Applied</option>
-                  <option value="interview">Interview</option>
-                  <option value="offered">Offered</option>
-                  <option value="rejected">Rejected</option>
-                </select>
+          <div className={`flex flex-col justify-between rounded-[28px] border p-5 ${theme.innerCard} h-full space-y-4`}>
+            <div className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Status</label>
+                  <select
+                    name="status"
+                    value={form.status}
+                    onChange={handleInputChange}
+                    className={`w-full rounded-xl border px-2 py-2 text-xs outline-none ${theme.input}`}
+                  >
+                    <option value="applied">Applied</option>
+                    <option value="interview">Interview</option>
+                    <option value="offered">Offered</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Work Type</label>
+                  <select
+                    name="work_type"
+                    value={form.work_type}
+                    onChange={handleInputChange}
+                    className={`w-full rounded-xl border px-2 py-2 text-xs outline-none ${theme.input}`}
+                  >
+                    <option value="remote">Remote</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="onsite">Onsite</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Applied Date</label>
+                  <input
+                    name="applied_date"
+                    type="date"
+                    value={form.applied_date}
+                    onChange={handleInputChange}
+                    className={`w-full rounded-xl border px-2 py-2 text-xs outline-none ${theme.input}`}
+                  />
+                </div>
+
+                <div>
+                  <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Deadline</label>
+                  <input
+                    name="deadline_date"
+                    type="date"
+                    value={form.deadline_date}
+                    onChange={handleInputChange}
+                    className={`w-full rounded-xl border px-2 py-2 text-xs outline-none ${theme.input}`}
+                  />
+                </div>
               </div>
 
               <div>
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Work Type</label>
-                <select
-                  name="work_type"
-                  value={form.work_type}
+                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Interview Date & Time</label>
+                <input
+                  name="interview_date"
+                  type="datetime-local"
+                  value={form.interview_date}
                   onChange={handleInputChange}
-                  className={`w-full rounded-xl border px-2 py-2 text-xs outline-none ${theme.input}`}
-                >
-                  <option value="remote">Remote</option>
-                  <option value="hybrid">Hybrid</option>
-                  <option value="onsite">Onsite</option>
-                </select>
+                  className={`w-full rounded-xl border px-3 py-2 text-xs outline-none ${theme.input}`}
+                />
+                {form.interview_date ? (
+                  <p className="mt-2 text-xs text-[#8D6F6F]">{formatInterviewDateTime(form.interview_date)}</p>
+                ) : null}
               </div>
+
+              {message && (
+                <div
+                  className={`rounded-2xl border px-4 py-2 text-xs ${
+                    message.type === 'success'
+                      ? darkMode
+                        ? 'border-[#1c3321] bg-[#18181b] text-[#7de0a0]'
+                        : 'border-[#DDF3E3] bg-[#F3FFF7] text-[#3F6B4C]'
+                      : darkMode
+                      ? 'border-[#331c1c] bg-[#18181b] text-[#f87171]'
+                      : 'border-[#FFE2E2] bg-[#FFF5F5] text-[#A04A4A]'
+                  }`}
+                >
+                  {message.text}
+                </div>
+              )}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Applied Date</label>
-                <input
-                  name="applied_date"
-                  type="date"
-                  value={form.applied_date}
-                  onChange={handleInputChange}
-                  className={`w-full rounded-xl border px-2 py-2 text-xs outline-none ${theme.input}`}
-                />
-              </div>
-
-              <div>
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Deadline</label>
-                <input
-                  name="deadline_date"
-                  type="date"
-                  value={form.deadline_date}
-                  onChange={handleInputChange}
-                  className={`w-full rounded-xl border px-2 py-2 text-xs outline-none ${theme.input}`}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Interview Date & Time</label>
-              <input
-                name="interview_date"
-                type="datetime-local"
-                value={form.interview_date}
-                onChange={handleInputChange}
-                className={`w-full rounded-xl border px-3 py-2 text-xs outline-none ${theme.input}`}
-              />
-              {form.interview_date ? (
-                <p className="mt-2 text-xs text-[#8D6F6F]">{formatInterviewDateTime(form.interview_date)}</p>
+            <div className="pt-4 flex flex-col sm:flex-row items-center justify-end gap-3">
+              {editingJobId ? (
+                <button
+                  type="button"
+                  onClick={onCancelEdit}
+                  className={`w-full sm:w-auto rounded-2xl border px-5 py-2.5 text-xs font-semibold transition ${
+                    darkMode
+                      ? 'border-[#3f3f46] bg-transparent text-[#a1a1aa] hover:bg-[#18181b]'
+                      : 'border-[#94A3B8] bg-transparent text-[#94A3B8] hover:bg-[#1F2937]/10'
+                  }`}
+                >
+                  Cancel edit
+                </button>
               ) : null}
-            </div>
-
-            {message && (
-              <div
-                className={`rounded-2xl border px-4 py-2 text-xs ${
-                  message.type === 'success'
-                    ? darkMode
-                      ? 'border-[#1c3321] bg-[#18181b] text-[#7de0a0]'
-                      : 'border-[#DDF3E3] bg-[#F3FFF7] text-[#3F6B4C]'
-                    : darkMode
-                    ? 'border-[#331c1c] bg-[#18181b] text-[#f87171]'
-                    : 'border-[#FFE2E2] bg-[#FFF5F5] text-[#A04A4A]'
-                }`}
-              >
-                {message.text}
-              </div>
-            )}
-
-            <div className="space-y-3">
               <button
                 type="submit"
                 disabled={submitting}
-                className={`inline-flex w-full items-center justify-center gap-3.5 rounded-2xl py-3 px-6 text-lg font-bold tracking-tight shadow-sm transition-all duration-150 hover:opacity-95 active:scale-[0.99] disabled:opacity-50 ${
+                className={`inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-2xl px-6 py-2.5 text-sm font-semibold shadow-sm transition-all duration-150 hover:opacity-95 active:scale-[0.98] disabled:opacity-50 ${
                   darkMode
                     ? 'bg-[#352528] text-[#fca5a5] border border-[#f87171]/40 hover:bg-[#402d31]'
                     : 'bg-[#FFE2DE] text-[#7A2C3B] border border-[#FFCCD3] hover:bg-[#FFD9D3]'
@@ -304,24 +319,11 @@ export default function DashboardTab({
                 <Image
                   src={darkMode ? '/Save_DarkMode.png' : '/Save.png'}
                   alt="Save icon"
-                  width={40}
-                  height={40}
-                  className="h-9 w-9 object-contain shrink-0"
+                  width={24}
+                  height={24}
+                  className="h-6 w-6 object-contain shrink-0"
                 />
               </button>
-              {editingJobId ? (
-                <button
-                  type="button"
-                  onClick={onCancelEdit}
-                  className={`w-full rounded-2xl border py-3 text-sm font-semibold transition ${
-                    darkMode
-                      ? 'border-[#3f3f46] bg-transparent text-[#a1a1aa] hover:bg-[#18181b]'
-                      : 'border-[#94A3B8] bg-transparent text-[#94A3B8] hover:bg-[#1F2937]/10'
-                  }`}
-                >
-                  Cancel edit
-                </button>
-              ) : null}
             </div>
           </div>
         </form>
