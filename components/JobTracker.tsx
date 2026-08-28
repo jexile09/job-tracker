@@ -631,7 +631,9 @@ export default function JobTracker() {
     bg: darkMode ? 'bg-[#121316] text-[#f4f4f5]' : 'bg-[#FAF8F5] text-[#4E3B3B]',
     card: darkMode ? 'bg-[#1c1d22] border-[#2d2e36]' : 'bg-[#FFFDF9] border-[#FFE5E2]',
     innerCard: darkMode ? 'bg-[#1c1d22] border-[#2d2e36] text-[#a1a1aa]' : 'bg-white border-[#FFE5E2] text-[#4E3B3B]',
-    input: darkMode ? 'bg-[#18181b] border-[#3f3f46] text-[#f4f4f5]' : 'bg-[#FFFDF9] border-[#FFE5E2] text-[#4E3B3B]',
+    input: darkMode
+      ? 'bg-[#18181b] border-[#3f3f46] text-[#f4f4f5] [color-scheme:dark]'
+      : 'bg-[#FFFDF9] border-[#FFE5E2] text-[#4E3B3B] [color-scheme:light]',
     label: darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]',
     tableHeader: darkMode ? 'border-[#2d2e36] text-[#a1a1aa]' : 'border-[#F2E7DE] text-[#8D6F6F]',
     tableRow: darkMode ? 'border-[#2d2e36]' : 'border-[#F7EEE8]',
