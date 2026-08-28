@@ -294,20 +294,20 @@ export default function DashboardTab({
               <button
                 type="submit"
                 disabled={submitting}
-                className={`inline-flex w-full items-center justify-center gap-2.5 rounded-2xl py-3 px-4 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90 active:scale-[0.99] disabled:opacity-50 ${
-                  darkMode ? 'bg-[#f87171] hover:bg-[#ef4444]' : 'bg-[#FFB7B2] hover:bg-[#ffa8a1]'
+                className={`inline-flex w-full items-center justify-center gap-3 rounded-2xl py-3.5 px-5 text-sm font-bold shadow-sm transition-all hover:opacity-95 active:scale-[0.99] disabled:opacity-50 ${
+                  darkMode
+                    ? 'bg-[#3a282b] text-[#fca5a5] border border-[#f87171]/30 hover:bg-[#453034]'
+                    : 'bg-[#FFE2DE] text-[#8C3A49] border border-[#FFCCD3] hover:bg-[#FFD8D3]'
                 }`}
               >
                 <span>{submitting ? 'Saving...' : editingJobId ? 'Save Changes' : 'Add Application'}</span>
-                <span className="flex items-center justify-center rounded-full bg-white/25 p-1 dark:bg-black/20">
-                  <Image
-                    src={darkMode ? '/Save_DarkMode.png' : '/Save.png'}
-                    alt="Save icon"
-                    width={20}
-                    height={20}
-                    className="h-5 w-5 object-contain"
-                  />
-                </span>
+                <Image
+                  src={darkMode ? '/Save_DarkMode.png' : '/Save.png'}
+                  alt="Save icon"
+                  width={32}
+                  height={32}
+                  className="h-7 w-7 object-contain shrink-0 drop-shadow-sm"
+                />
               </button>
               {editingJobId ? (
                 <button
