@@ -171,7 +171,7 @@ export default function SettingsTab({
               </div>
 
               {/* Category 2: Table Columns */}
-              <div className="border-t pt-4 border-gray-200/50 dark:border-gray-800">
+              <div className={`border-t pt-4 ${darkMode ? 'border-[#2d2e36]' : 'border-[#FFE5E2]'}`}>
                 <p className="text-xs font-bold tracking-wider uppercase opacity-80 mb-2.5">
                   Dashboard Table Columns
                 </p>
@@ -194,7 +194,7 @@ export default function SettingsTab({
               </div>
 
               {/* Category 3: Row Spacing & Filtering */}
-              <div className="border-t pt-4 border-gray-200/50 dark:border-gray-800">
+              <div className={`border-t pt-4 ${darkMode ? 'border-[#2d2e36]' : 'border-[#FFE5E2]'}`}>
                 <p className="text-xs font-bold tracking-wider uppercase opacity-80 mb-2.5">
                   Table Layout & Filtering
                 </p>
