@@ -300,8 +300,8 @@ export default function DashboardTab({
               >
                 <span>{submitting ? 'Saving...' : editingJobId ? 'Save changes' : 'Add Application'}</span>
                 <Image
-                  src="/icons/Save.png"
-                  alt="Save icon"
+                  src={darkMode ? '/Appli-Log_Flower_DarkMode.png' : '/Appli-Log_Flower.png'}
+                  alt="Flower icon"
                   width={16}
                   height={16}
                   className="h-4 w-4 object-contain"
