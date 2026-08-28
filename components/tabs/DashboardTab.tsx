@@ -294,19 +294,19 @@ export default function DashboardTab({
               <button
                 type="submit"
                 disabled={submitting}
-                className={`inline-flex w-full items-center justify-center gap-2.5 rounded-2xl py-3 px-5 text-base font-bold shadow-sm transition-all hover:opacity-95 active:scale-[0.99] disabled:opacity-50 ${
+                className={`inline-flex w-full items-center justify-center gap-3.5 rounded-2xl py-3 px-6 text-lg font-bold tracking-tight shadow-sm transition-all duration-150 hover:opacity-95 active:scale-[0.99] disabled:opacity-50 ${
                   darkMode
-                    ? 'bg-[#3a282b] text-[#fca5a5] border border-[#f87171]/30 hover:bg-[#453034]'
-                    : 'bg-[#FFE2DE] text-[#8C3A49] border border-[#FFCCD3] hover:bg-[#FFD8D3]'
+                    ? 'bg-[#352528] text-[#fca5a5] border border-[#f87171]/40 hover:bg-[#402d31]'
+                    : 'bg-[#FFE2DE] text-[#7A2C3B] border border-[#FFCCD3] hover:bg-[#FFD9D3]'
                 }`}
               >
                 <span>{submitting ? 'Saving...' : editingJobId ? 'Save Changes' : 'Add Application'}</span>
                 <Image
                   src={darkMode ? '/Save_DarkMode.png' : '/Save.png'}
                   alt="Save icon"
-                  width={28}
-                  height={28}
-                  className="h-7 w-7 object-contain shrink-0 drop-shadow-sm"
+                  width={40}
+                  height={40}
+                  className="h-9 w-9 object-contain shrink-0"
                 />
               </button>
               {editingJobId ? (
