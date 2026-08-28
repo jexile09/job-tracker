@@ -294,18 +294,20 @@ export default function DashboardTab({
               <button
                 type="submit"
                 disabled={submitting}
-                className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white transition ${
-                  darkMode ? 'bg-[#f87171] hover:bg-[#ef4444]' : 'bg-[#FFB7B2] hover:bg-[#FFA9A0]'
+                className={`inline-flex w-full items-center justify-center gap-2.5 rounded-2xl py-3 px-4 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90 active:scale-[0.99] disabled:opacity-50 ${
+                  darkMode ? 'bg-[#f87171] hover:bg-[#ef4444]' : 'bg-[#FFB7B2] hover:bg-[#ffa8a1]'
                 }`}
               >
-                <span>{submitting ? 'Saving...' : editingJobId ? 'Save changes' : 'Add Application'}</span>
-                <Image
-                  src={darkMode ? '/Appli-Log_Flower_DarkMode.png' : '/Appli-Log_Flower.png'}
-                  alt="Flower icon"
-                  width={16}
-                  height={16}
-                  className="h-4 w-4 object-contain"
-                />
+                <span>{submitting ? 'Saving...' : editingJobId ? 'Save Changes' : 'Add Application'}</span>
+                <span className="flex items-center justify-center rounded-full bg-white/25 p-1 dark:bg-black/20">
+                  <Image
+                    src={darkMode ? '/Save_DarkMode.png' : '/Save.png'}
+                    alt="Save icon"
+                    width={20}
+                    height={20}
+                    className="h-5 w-5 object-contain"
+                  />
+                </span>
               </button>
               {editingJobId ? (
                 <button
