@@ -294,7 +294,7 @@ export default function DashboardTab({
               <button
                 type="submit"
                 disabled={submitting}
-                className={`inline-flex w-full items-center justify-center gap-3 rounded-2xl py-1 px-5 min-h-[56px] text-base font-bold shadow-sm transition-all hover:opacity-95 active:scale-[0.99] disabled:opacity-50 ${
+                className={`inline-flex w-full items-center justify-center gap-3.5 rounded-2xl py-2 px-6 min-h-[58px] text-lg font-extrabold tracking-wide shadow-sm transition-all hover:opacity-95 active:scale-[0.99] disabled:opacity-50 ${
                   darkMode
                     ? 'bg-[#3a282b] text-[#fca5a5] border border-[#f87171]/30 hover:bg-[#453034]'
                     : 'bg-[#FFE2DE] text-[#8C3A49] border border-[#FFCCD3] hover:bg-[#FFD8D3]'
