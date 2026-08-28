@@ -645,7 +645,6 @@ export default function JobTracker() {
     return interviewDate.getTime() > todayTimestamp;
   }).length;
 
-  // Compute interviews occurring within the upcoming 7 days for priority countdown alerts
   const urgentInterviews = useMemo(() => {
     const oneWeekFromNow = todayTimestamp + 7 * 24 * 60 * 60 * 1000;
     return activeJobs
@@ -685,13 +684,14 @@ export default function JobTracker() {
       <div className="mx-auto max-w-screen-xl space-y-6">
         <section className={`rounded-[32px] border p-6 shadow-md sm:p-8 ${theme.card}`}>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-start gap-4">
+            <div className="flex items-center gap-4">
               <Image
-                src={darkMode ? '/Appli-Log_DarkMode.png' : '/Appli-Log.png'}
-                alt="Appli-Log logo"
+                src={darkMode ? '/Appli-Log_Flower_DarkMode.png' : '/Appli-Log_Flower.png'}
+                alt="Appli-Log flower logo"
                 width={80}
                 height={80}
-                className="h-16 w-16 object-contain sm:h-20 sm:w-20 shrink-0"
+                className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl object-contain shrink-0"
+                priority
               />
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] text-[#E07A5F]">Welcome back</p>
@@ -704,7 +704,6 @@ export default function JobTracker() {
               </div>
             </div>
 
-            {/* Dynamic auto-fill grid for metric cards to eliminate blank layout gaps */}
             <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(140px,1fr))] lg:max-w-[500px]">
               {showOpenApplicationsCard && (
                 <div className={`rounded-[24px] border p-4 ${theme.innerCard}`}>
@@ -727,7 +726,6 @@ export default function JobTracker() {
             </div>
           </div>
 
-          {/* Dynamic auto-fit grid for status breakdown cards */}
           {showStatusBreakdown && (
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(120px,1fr))]">
               <div className={`rounded-[20px] border p-3.5 ${theme.innerCard}`}>
@@ -749,7 +747,6 @@ export default function JobTracker() {
             </div>
           )}
 
-          {/* Upcoming Interview Countdown Alert Banner */}
           {urgentInterviews.length > 0 && (
             <div className={`mt-5 rounded-2xl border p-4 ${darkMode ? 'border-[#854d0e] bg-[#291e0a] text-[#fef08a]' : 'border-[#FDE68A] bg-[#FFFBEB] text-[#92400E]'}`}>
               <div className="flex items-center gap-2 font-semibold text-sm">
