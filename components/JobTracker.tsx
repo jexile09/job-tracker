@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import Image from 'next/image';
 import { supabase } from '../lib/supabaseClient';
@@ -842,6 +844,8 @@ export default function JobTracker() {
               statusStyles={statusStyles}
               formatInterviewDateTime={formatInterviewDateTime}
               getWeekdayChipStyle={getWeekdayChipStyle}
+              userId={session?.user?.id}
+              onRefresh={() => session?.user?.id && fetchJobs(session.user.id)}
             />
           )}
           {activeTab === 'archive' && (
