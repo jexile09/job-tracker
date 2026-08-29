@@ -324,7 +324,7 @@ export default function SpreadsheetTab({
             </p>
           </div>
 
-          {/* Action Toolbar with custom PNG icons and correct "Export CSV" labeling */}
+          {/* Action Toolbar with distinct styled action buttons for high contrast */}
           <div className="flex flex-wrap items-center gap-2.5">
             <input
               type="file"
@@ -338,7 +338,11 @@ export default function SpreadsheetTab({
             <button
               type="button"
               onClick={handleDownloadTemplate}
-              className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-xs sm:text-sm font-semibold shadow-sm transition hover:opacity-90 ${theme.innerCard}`}
+              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold shadow-sm transition hover:opacity-90 active:scale-[0.99] ${
+                darkMode
+                  ? 'bg-[#2b222d] text-[#e8a2e4] border border-[#7a4c77]'
+                  : 'bg-[#F4E8F8] text-[#783E74] border border-[#E2C7EC]'
+              }`}
             >
               <span>Download Template</span>
               <Image
@@ -356,8 +360,10 @@ export default function SpreadsheetTab({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={importing}
-              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50 ${
-                darkMode ? 'bg-[#FA6E6E] hover:bg-[#f85c5c]' : 'bg-[#FFAAA6] hover:bg-[#ff9e9a]'
+              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold shadow-sm transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50 ${
+                darkMode
+                  ? 'bg-[#1b2d26] text-[#7de0a0] border border-[#2e684d]'
+                  : 'bg-[#E3F4EA] text-[#2C6E45] border border-[#B5E2C7]'
               }`}
             >
               <span>{importing ? 'Importing…' : 'Import CSV'}</span>
@@ -375,8 +381,10 @@ export default function SpreadsheetTab({
             <button
               type="button"
               onClick={handleExportFilteredCsv}
-              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.99] ${
-                darkMode ? 'bg-[#FA6E6E] hover:bg-[#f85c5c]' : 'bg-[#FFAAA6] hover:bg-[#ff9e9a]'
+              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold shadow-sm transition hover:opacity-90 active:scale-[0.99] ${
+                darkMode
+                  ? 'bg-[#2d2122] text-[#f87171] border border-[#853b3b]'
+                  : 'bg-[#FFE2E2] text-[#A04A4A] border border-[#FFCCCC]'
               }`}
             >
               <span>Export CSV</span>
