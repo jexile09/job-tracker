@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import type { JobRecord, JobStatus, ThemeStyles } from '../../types';
 
-/* Type definition for batch cleanup criteria */
+/* Type definition describing cleanup criteria for bulk archival */
 type CleanupRules = {
   rejected: boolean;
   olderThanOneWeek: boolean;
@@ -12,7 +12,7 @@ type CleanupRules = {
   olderThanThreeMonths: boolean;
 };
 
-/* TypeScript interface for incoming component props */
+/* TypeScript interface listing incoming component properties and event handlers */
 type ArchiveTabProps = {
   theme: ThemeStyles;
   darkMode: boolean;
@@ -34,10 +34,10 @@ export default function ArchiveTab({
   onRunCleanup,
   cleanupLoading,
 }: ArchiveTabProps) {
-  /* State controlling modal visibility */
+  /* State variable controlling modal dialog open and closed states */
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  /* State managing checkbox selections for cleanup rules */
+  /* State tracking checkbox selections for automated cleanup rules */
   const [rules, setRules] = useState<CleanupRules>({
     rejected: true,
     olderThanOneWeek: false,
@@ -45,32 +45,33 @@ export default function ArchiveTab({
     olderThanThreeMonths: false,
   });
 
-  /* Toggle individual cleanup rule flags */
+  /* Toggle individual cleanup criteria flags */
   const toggleRule = (key: keyof CleanupRules) => {
     setRules((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  /* Execute cleanup routine and dismiss modal dialog */
+  /* Execute cleanup logic and close the modal dialog */
   const handleRunCleanup = async () => {
     await onRunCleanup(rules);
     setIsModalOpen(false);
   };
 
   return (
-    /* Fluid container constrained to 1280px with auto margins */
+    /* Top-level layout container constrained to max-w-7xl with automatic margins */
     <div className="w-full max-w-7xl mx-auto space-y-6">
-      {/* Archive Card Container */}
+      {/* Primary surface container with adaptive theme styling */}
       <section className={`rounded-[28px] sm:rounded-[32px] border p-4 sm:p-6 lg:p-8 shadow-md transition-all ${theme.card}`}>
-        {/* Header Toolbar: flex-col on mobile, flex-row on larger viewports */}
+        {/* Header layout: vertical stacking on mobile viewports and horizontal alignment on small screens */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <h2 className="text-2xl sm:text-3xl font-semibold">Archived Applications</h2>
-            {/* Dynamic theme-aware archive box illustration */}
+            {/* Next.js Image component pointing to transparent PNG assets in the public directory */}
             <Image
-              src={darkMode ? '/Archive_DarkMode.jpg' : '/Archive.jpg'}
+              src={darkMode ? '/Archive_DarkMode.png' : '/Archive.png'}
               alt="Blossom Archive Box"
               width={36}
               height={36}
+              priority
               className="h-8 w-8 sm:h-9 sm:w-9 object-contain shrink-0"
             />
           </div>
@@ -123,14 +124,14 @@ export default function ArchiveTab({
           </table>
         </div>
 
-        {/* Empty state conditional notice */}
+        {/* Empty state notice when no matching records exist */}
         {filteredJobs.length === 0 ? (
           <div className={`mt-4 rounded-2xl border p-4 text-sm ${theme.innerCard}`}>
             No archived applications found.
           </div>
         ) : null}
 
-        {/* Active Application Status Banner */}
+        {/* Active application status card */}
         <div
           className={`mt-6 rounded-2xl border p-4 text-sm transition ${
             darkMode
@@ -147,7 +148,7 @@ export default function ArchiveTab({
         </div>
       </section>
 
-      {/* Auto-Archive Configuration Modal Dialog */}
+      {/* Modal dialog overlay for selecting auto-archive batch rules */}
       {isModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm">
           <div className={`w-full max-w-lg rounded-[28px] sm:rounded-[32px] border p-5 sm:p-6 shadow-2xl transition-all ${theme.card}`}>
