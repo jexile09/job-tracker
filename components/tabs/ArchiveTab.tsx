@@ -22,7 +22,7 @@ type ArchiveTabProps = {
   cleanupLoading: boolean;
 };
 
-/* Detailed vector blossom icon matching DashboardTab in light and dark mode */
+/* Vector blossom icon matching the DashboardTab Add Application styling */
 function BlossomIcon({ darkMode }: { darkMode: boolean }) {
   const petalFill = darkMode ? '#F4727C' : '#FFB5C5';
   const petalStroke = darkMode ? '#9A2B35' : '#D6657A';
@@ -148,13 +148,14 @@ export default function ArchiveTab({
                     </span>
                   </td>
                   <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                    {/* Restore button matches the Add Application button palette */}
                     <button
                       type="button"
                       onClick={() => handleToggleArchive(job.id, false)}
-                      className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.99] ${
+                      className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-semibold shadow-sm transition-all duration-150 hover:opacity-95 active:scale-[0.99] ${
                         darkMode
-                          ? 'bg-[#FA6E6E] hover:bg-[#f85c5c]'
-                          : 'bg-[#FFAAA6] hover:bg-[#ff9e9a]'
+                          ? 'bg-[#352528] text-[#fca5a5] border border-[#f87171]/40 hover:bg-[#402d31]'
+                          : 'bg-[#FFE2DE] text-[#7A2C3B] border border-[#FFCCD3] hover:bg-[#FFD9D3]'
                       }`}
                     >
                       <span>Restore</span>
