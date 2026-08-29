@@ -324,7 +324,7 @@ export default function SpreadsheetTab({
             </p>
           </div>
 
-          {/* Action Toolbar with unified coral/rose button tones optimized for both light and dark icon contrast */}
+          {/* Action Toolbar with lighter pastel pink button tones matching the Dashboard "Add Application" button */}
           <div className="flex flex-wrap items-center gap-2.5">
             <input
               type="file"
@@ -338,10 +338,10 @@ export default function SpreadsheetTab({
             <button
               type="button"
               onClick={handleDownloadTemplate}
-              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.99] ${
+              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold shadow-sm transition hover:opacity-90 active:scale-[0.99] ${
                 darkMode
-                  ? 'bg-[#FA6E6E] hover:bg-[#f85c5c]'
-                  : 'bg-[#FFAAA6] hover:bg-[#ff9e9a]'
+                  ? 'bg-[#352528] text-[#fca5a5] border border-[#f87171]/40 hover:bg-[#402d31]'
+                  : 'bg-[#FFE2DE] text-[#7A2C3B] border border-[#FFCCD3] hover:bg-[#FFD9D3]'
               }`}
             >
               <span>Download Template</span>
@@ -360,10 +360,10 @@ export default function SpreadsheetTab({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={importing}
-              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50 ${
+              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold shadow-sm transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50 ${
                 darkMode
-                  ? 'bg-[#FA6E6E] hover:bg-[#f85c5c]'
-                  : 'bg-[#FFAAA6] hover:bg-[#ff9e9a]'
+                  ? 'bg-[#352528] text-[#fca5a5] border border-[#f87171]/40 hover:bg-[#402d31]'
+                  : 'bg-[#FFE2DE] text-[#7A2C3B] border border-[#FFCCD3] hover:bg-[#FFD9D3]'
               }`}
             >
               <span>{importing ? 'Importing…' : 'Import CSV'}</span>
@@ -381,10 +381,10 @@ export default function SpreadsheetTab({
             <button
               type="button"
               onClick={handleExportFilteredCsv}
-              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.99] ${
+              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold shadow-sm transition hover:opacity-90 active:scale-[0.99] ${
                 darkMode
-                  ? 'bg-[#FA6E6E] hover:bg-[#f85c5c]'
-                  : 'bg-[#FFAAA6] hover:bg-[#ff9e9a]'
+                  ? 'bg-[#352528] text-[#fca5a5] border border-[#f87171]/40 hover:bg-[#402d31]'
+                  : 'bg-[#FFE2DE] text-[#7A2C3B] border border-[#FFCCD3] hover:bg-[#FFD9D3]'
               }`}
             >
               <span>Export CSV</span>
