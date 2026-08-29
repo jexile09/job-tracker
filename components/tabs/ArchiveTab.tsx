@@ -24,6 +24,58 @@ type ArchiveTabProps = {
   cleanupLoading: boolean;
 };
 
+/* Vector blossom icon generated mathematically via SVG identical to DashboardTab implementation */
+function BlossomIcon({ darkMode }: { darkMode: boolean }) {
+  /* Dynamic color variables mapped according to active theme mode */
+  const petalFill = darkMode ? '#F4727C' : '#FFB5C5';
+  const petalStroke = darkMode ? '#9A2B35' : '#D6657A';
+  const stamenColor = darkMode ? '#7F1D24' : '#C4884D';
+  const centerColor = darkMode ? '#A3343E' : '#F9D1A2';
+
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        {/* Reusable base petal geometry defined with cubic Bézier curve paths */}
+        <g id="archivePetal">
+          <path
+            d="M 50 50 C 40 38 32 24 38 12 C 43 2 48 10 50 14 C 52 10 57 2 62 12 C 68 24 60 38 50 50 Z"
+            fill={petalFill}
+            stroke={petalStroke}
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+          />
+          <path d="M 50 34 L 50 20" stroke={petalStroke} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+        </g>
+      </defs>
+
+      {/* Five-fold radial repetition of the base petal at 72 degree steps */}
+      <g>
+        <use href="#archivePetal" />
+        <use href="#archivePetal" transform="rotate(72 50 50)" />
+        <use href="#archivePetal" transform="rotate(144 50 50)" />
+        <use href="#archivePetal" transform="rotate(216 50 50)" />
+        <use href="#archivePetal" transform="rotate(288 50 50)" />
+      </g>
+
+      {/* Ten stamen stems generated mathematically across 36 degree intervals */}
+      {[0, 36, 72, 108, 144, 180, 216, 252, 288, 324].map((deg) => (
+        <g key={deg} transform={`rotate(${deg} 50 50)`}>
+          <line x1="50" y1="50" x2="50" y2="29" stroke={stamenColor} strokeWidth="1.8" strokeLinecap="round" />
+          <circle cx="50" cy="28" r="2.2" fill={stamenColor} />
+        </g>
+      ))}
+
+      {/* Center pistil node */}
+      <circle cx="50" cy="50" r="6.5" fill={centerColor} stroke={stamenColor} strokeWidth="1.5" />
+    </svg>
+  );
+}
+
 /* Primary functional component managing the archived jobs view, modal dialog lifecycle, and batch cleanup triggers */
 export default function ArchiveTab({
   theme,
@@ -119,13 +171,14 @@ export default function ArchiveTab({
                     </span>
                   </td>
                   <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                    {/* Restoration button executing status mutations to remove the application from archive state */}
+                    {/* Restoration button executing status mutations with inline theme-adaptive SVG blossom icon */}
                     <button
                       type="button"
                       onClick={() => handleToggleArchive(job.id, false)}
-                      className={`rounded-xl border px-3.5 py-1.5 text-xs font-semibold transition ${theme.input}`}
+                      className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-xs font-semibold transition ${theme.input}`}
                     >
-                      Restore 🌸
+                      <span>Restore</span>
+                      <BlossomIcon darkMode={darkMode} />
                     </button>
                   </td>
                 </tr>
