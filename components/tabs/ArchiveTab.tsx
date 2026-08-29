@@ -63,17 +63,20 @@ export default function ArchiveTab({
       <section className={`rounded-[28px] sm:rounded-[32px] border p-4 sm:p-6 lg:p-8 shadow-md transition-all ${theme.card}`}>
         {/* Header layout: vertical stacking on mobile viewports and horizontal alignment on small screens */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <h2 className="text-2xl sm:text-3xl font-semibold">Archived Applications</h2>
-            {/* Next.js Image component pointing to transparent PNG assets in the public directory */}
-            <Image
-              src={darkMode ? '/Archive_DarkMode.png' : '/Archive.png'}
-              alt="Blossom Archive Box"
-              width={36}
-              height={36}
-              priority
-              className="h-8 w-8 sm:h-9 sm:w-9 object-contain shrink-0"
-            />
+            {/* Scaled precisely to match title height with explicit priority decoding */}
+            <div className="relative flex items-center justify-center h-6 w-6 sm:h-7 sm:w-7 shrink-0">
+              <Image
+                src={darkMode ? '/Archive_DarkMode.png' : '/Archive.png'}
+                alt="Blossom Archive Box"
+                width={28}
+                height={28}
+                priority
+                unoptimized
+                className="h-full w-full object-contain"
+              />
+            </div>
           </div>
 
           <button
