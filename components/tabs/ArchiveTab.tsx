@@ -65,8 +65,8 @@ export default function ArchiveTab({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3.5">
             <h2 className="text-2xl sm:text-3xl font-semibold">Archived Applications</h2>
-            {/* Enlarged image container scaled to 64px by 64px for prominent display */}
-            <div className="relative flex items-center justify-center h-14 w-14 sm:h-16 sm:w-16 shrink-0">
+            {/* Shifted slightly upward via negative vertical translation */}
+            <div className="relative flex items-center justify-center h-14 w-14 sm:h-16 sm:w-16 shrink-0 -translate-y-1 sm:-translate-y-1.5">
               <Image
                 src={darkMode ? '/Archive_DarkMode.png' : '/Archive.png'}
                 alt="Blossom Archive Box"
