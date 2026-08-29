@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { Fragment, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import type { JobRecord, JobStatus, SalaryCurrency, ThemeStyles, WorkType } from '../../types';
+import { formatSalary } from '../../lib/salary';
 
 type SpreadsheetTabProps = {
   jobs: JobRecord[];
@@ -15,7 +16,7 @@ type SpreadsheetTabProps = {
   onRefresh?: () => void;
 };
 
-/* CSV Template Header Definition */
+// Column headers expected when building or reading spreadsheet CSV files.
 const CSV_HEADERS = [
   'Company Name',
   'Application Link',
@@ -31,7 +32,8 @@ const CSV_HEADERS = [
   'Notes',
 ];
 
-/* Helper to escape and format strings for CSV output */
+// Handles CSV formatting rules: wraps text in double quotes if it contains commas,
+// newlines, or quotes, and escapes internal quotes with double-quotes.
 const escapeCsvValue = (val: unknown): string => {
   if (val === null || val === undefined) return '';
   const str = String(val);
@@ -41,7 +43,8 @@ const escapeCsvValue = (val: unknown): string => {
   return str;
 };
 
-/* Robust client-side CSV line parser supporting double-quoted fields with commas */
+// Custom parser that splits raw CSV text into a 2D array while correctly preserving
+// commas and line breaks that live inside double-quoted text blocks.
 const parseCsvRows = (text: string): string[][] => {
   const rows: string[][] = [];
   let currentRow: string[] = [];
@@ -93,6 +96,24 @@ const parseCsvRows = (text: string): string[][] => {
   return rows;
 };
 
+// Reusable SVG dropdown arrow to maintain consistent select input styling across themes.
+function DropdownChevron() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      aria-hidden="true"
+      className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 opacity-60"
+    >
+      <path
+        fillRule="evenodd"
+        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
 export default function SpreadsheetTab({
   jobs,
   theme,
@@ -107,7 +128,26 @@ export default function SpreadsheetTab({
   const [importing, setImporting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  /* 1. Download Blank Sample CSV Template */
+  // Search and filter controls
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [archiveFilter, setArchiveFilter] = useState<'all' | 'active' | 'archived'>('all');
+
+  // Tracks which specific rows have their note details expanded
+  const [expandedNotes, setExpandedNotes] = useState<Record<number, boolean>>({});
+
+  const toggleNoteDetails = (id: number) => {
+    setExpandedNotes((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setSelectedStatus('all');
+    setArchiveFilter('all');
+  };
+
+  // Generates and triggers a browser download for a sample CSV with dummy data
+  // so the user knows what format the import system expects.
   const handleDownloadTemplate = () => {
     const exampleRow = [
       'Example Tech',
@@ -121,7 +161,7 @@ export default function SpreadsheetTab({
       'USD',
       'remote',
       'Remote, US',
-      'Referred by university alumni',
+      'First round screening completed',
     ];
 
     const csvContent = [CSV_HEADERS.join(','), exampleRow.map(escapeCsvValue).join(',')].join('\n');
@@ -129,21 +169,21 @@ export default function SpreadsheetTab({
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'appli_log_job_template.csv');
+    link.setAttribute('download', 'appli_log_template.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
-  /* 2. Export Current Job Applications to CSV */
-  const handleExportCsv = () => {
-    if (jobs.length === 0) {
-      setFeedback({ type: 'error', text: 'No job entries available to export.' });
+  // Exports the currently filtered jobs list into a downloadable CSV file.
+  const handleExportFilteredCsv = () => {
+    if (filteredJobs.length === 0) {
+      setFeedback({ type: 'error', text: 'No matching jobs to export with current filters.' });
       return;
     }
 
-    const rows = jobs.map((j) => [
+    const rows = filteredJobs.map((j) => [
       escapeCsvValue(j.company_name),
       escapeCsvValue(j.application_link || ''),
       escapeCsvValue(j.status),
@@ -163,14 +203,15 @@ export default function SpreadsheetTab({
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `appli_log_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `appli_log_spreadsheet_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
-  /* 3. Handle File Upload and Import */
+  // Reads a selected CSV file, validates its fields against allowed database values,
+  // and bulk inserts the rows into Supabase.
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -188,10 +229,10 @@ export default function SpreadsheetTab({
       const rows = parseCsvRows(text);
 
       if (rows.length <= 1) {
-        throw new Error('CSV file is empty or missing data rows.');
+        throw new Error('The uploaded CSV is empty or missing data rows.');
       }
 
-      /* Skip header row */
+      // First row contains the headers, so we skip index 0
       const dataRows = rows.slice(1);
       const today = new Date().toISOString().split('T')[0];
 
@@ -207,6 +248,7 @@ export default function SpreadsheetTab({
           const rawWorkType = row[9]?.toLowerCase().trim() as WorkType;
           const work_type: WorkType = validWorkTypes.includes(rawWorkType) ? rawWorkType : 'remote';
 
+          // Strips out dollar signs, commas, or letters so we only store pure numeric values in SQL
           const rawSalaryVal = row[6]?.replace(/[^0-9.]/g, '');
           const salary_value = rawSalaryVal && !Number.isNaN(Number(rawSalaryVal)) ? Number(rawSalaryVal) : null;
 
@@ -215,7 +257,7 @@ export default function SpreadsheetTab({
 
           return {
             user_id: userId,
-            company_name: row[0]?.trim() || 'Untitled Role',
+            company_name: row[0]?.trim() || 'Untitled Position',
             application_link: row[1]?.trim() || '',
             status,
             applied_date: row[3]?.trim() || today,
@@ -238,7 +280,7 @@ export default function SpreadsheetTab({
       const { error } = await supabase.from('jobs').insert(parsedJobs);
       if (error) throw error;
 
-      setFeedback({ type: 'success', text: `Successfully imported ${parsedJobs.length} application(s)!` });
+      setFeedback({ type: 'success', text: `Successfully imported ${parsedJobs.length} job application(s)!` });
       if (onRefresh) onRefresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to import CSV.';
@@ -249,20 +291,50 @@ export default function SpreadsheetTab({
     }
   };
 
+  // Filters the entire job collection based on search text, status, and archive state
+  const filteredJobs = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+
+    return jobs.filter((job) => {
+      // Archive filter check
+      if (archiveFilter === 'active' && job.is_archived) return false;
+      if (archiveFilter === 'archived' && !job.is_archived) return false;
+
+      // Status dropdown check
+      if (selectedStatus !== 'all' && job.status !== selectedStatus) return false;
+
+      // Text query match against company, location, or notes
+      if (q) {
+        const matchCompany = job.company_name.toLowerCase().includes(q);
+        const matchLocation = (job.location || '').toLowerCase().includes(q);
+        const matchNotes = (job.notes || '').toLowerCase().includes(q);
+        if (!matchCompany && !matchLocation && !matchNotes) return false;
+      }
+
+      return true;
+    });
+  }, [jobs, searchQuery, selectedStatus, archiveFilter]);
+
+  // Splits the filtered list into active and archived buckets for the table sections
+  const notArchivedJobs = useMemo(() => filteredJobs.filter((j) => !j.is_archived), [filteredJobs]);
+  const archivedJobs = useMemo(() => filteredJobs.filter((j) => j.is_archived), [filteredJobs]);
+
+  const buttonStyle = 'text-xs px-3 py-1.5';
+
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6">
+      {/* Top Header Card */}
       <section className={`rounded-[28px] sm:rounded-[32px] border p-4 sm:p-6 lg:p-8 shadow-md transition-all ${theme.card}`}>
-        {/* Header and CSV Action Toolbar */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-semibold leading-none">Spreadsheet Overview</h2>
+            <h2 className="text-2xl sm:text-3xl font-semibold leading-none">Spreadsheet</h2>
             <p className={`mt-2 text-xs sm:text-sm ${darkMode ? 'text-[#a1a1aa]' : 'text-[#6C5656]'}`}>
-              Manage, import, or export all {jobs.length} tracked applications.
+              Filter rows, scan status colors quickly, and export the current filtered dataset.
             </p>
           </div>
 
+          {/* Action Toolbar with Template, Import, and Export Buttons */}
           <div className="flex flex-wrap items-center gap-2.5">
-            {/* Hidden CSV File Input */}
             <input
               type="file"
               ref={fileInputRef}
@@ -271,42 +343,103 @@ export default function SpreadsheetTab({
               className="hidden"
             />
 
-            {/* Download Template Button */}
             <button
               type="button"
               onClick={handleDownloadTemplate}
-              className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold shadow-sm transition hover:opacity-90 ${theme.innerCard}`}
+              className={`inline-flex items-center gap-1.5 rounded-2xl border px-4 py-2.5 text-xs sm:text-sm font-semibold shadow-sm transition hover:opacity-90 ${theme.innerCard}`}
             >
+              <span>Download Template</span>
               <span aria-hidden="true">📋</span>
-              <span>Template</span>
             </button>
 
-            {/* Import CSV Button */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={importing}
-              className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50 ${
+              className={`inline-flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50 ${
                 darkMode ? 'bg-[#FA6E6E] hover:bg-[#f85c5c]' : 'bg-[#FFAAA6] hover:bg-[#ff9e9a]'
               }`}
             >
-              <span aria-hidden="true">📥</span>
               <span>{importing ? 'Importing…' : 'Import CSV'}</span>
+              <span aria-hidden="true">📥</span>
             </button>
 
-            {/* Export CSV Button */}
             <button
               type="button"
-              onClick={handleExportCsv}
-              className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold shadow-sm transition hover:opacity-90 ${theme.innerCard}`}
+              onClick={handleExportFilteredCsv}
+              className={`inline-flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.99] ${
+                darkMode ? 'bg-[#FA6E6E] hover:bg-[#f85c5c]' : 'bg-[#FFAAA6] hover:bg-[#ff9e9a]'
+              }`}
             >
-              <span aria-hidden="true">📤</span>
-              <span>Export CSV</span>
+              <span>Download CSV</span>
             </button>
           </div>
         </div>
 
-        {/* Feedback Alert Message */}
+        {/* Filter Controls Bar */}
+        <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center">
+          <input
+            type="text"
+            placeholder="Search company, location, notes"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={`w-full lg:w-72 rounded-2xl border px-3.5 py-2.5 text-sm outline-none transition ${theme.input}`}
+          />
+
+          <div className="relative w-full sm:w-44">
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className={`w-full appearance-none rounded-2xl border pl-3.5 pr-10 py-2.5 text-sm outline-none transition ${theme.input}`}
+            >
+              <option value="all">All statuses</option>
+              <option value="applied">Applied</option>
+              <option value="interview">Interview</option>
+              <option value="offered">Offered</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <DropdownChevron />
+          </div>
+
+          <div className="relative w-full sm:w-48">
+            <select
+              value={archiveFilter}
+              onChange={(e) => setArchiveFilter(e.target.value as 'all' | 'active' | 'archived')}
+              className={`w-full appearance-none rounded-2xl border pl-3.5 pr-10 py-2.5 text-sm outline-none transition ${theme.input}`}
+            >
+              <option value="all">All archive states</option>
+              <option value="active">Not Archived only</option>
+              <option value="archived">Archived only</option>
+            </select>
+            <DropdownChevron />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleClearFilters}
+            className={`rounded-2xl border px-4 py-2.5 text-sm font-semibold transition sm:w-auto ${theme.innerCard} hover:opacity-90`}
+          >
+            Clear filters
+          </button>
+        </div>
+
+        {/* Status Counters */}
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className={`rounded-2xl border p-4 ${theme.innerCard}`}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-70">Filtered Total</p>
+            <p className="mt-1 text-2xl font-bold">{filteredJobs.length}</p>
+          </div>
+          <div className={`rounded-2xl border p-4 ${theme.innerCard}`}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-70">Not Archived</p>
+            <p className="mt-1 text-2xl font-bold">{notArchivedJobs.length}</p>
+          </div>
+          <div className={`rounded-2xl border p-4 ${theme.innerCard}`}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-70">Archived</p>
+            <p className="mt-1 text-2xl font-bold">{archivedJobs.length}</p>
+          </div>
+        </div>
+
+        {/* Upload Alert */}
         {feedback && (
           <div
             className={`mt-4 rounded-2xl border px-4 py-2.5 text-xs ${
@@ -322,65 +455,185 @@ export default function SpreadsheetTab({
             {feedback.text}
           </div>
         )}
-
-        {/* Full Application Data Grid */}
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-transparent [-webkit-overflow-scrolling:touch]">
-          <table className="w-full text-left text-sm min-w-[700px]">
-            <thead>
-              <tr className={`border-b ${theme.tableHeader}`}>
-                <th className="px-4 py-3 font-semibold">Company</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold whitespace-nowrap">Applied Date</th>
-                <th className="px-4 py-3 font-semibold whitespace-nowrap">Work Type</th>
-                <th className="px-4 py-3 font-semibold whitespace-nowrap">Interview</th>
-                <th className="px-4 py-3 font-semibold whitespace-nowrap">Location</th>
-              </tr>
-            </thead>
-            <tbody>
-              {jobs.map((job) => (
-                <tr key={job.id} className={`border-b ${theme.tableRow}`}>
-                  <td className="px-4 py-3 font-semibold">
-                    <div>{job.company_name}</div>
-                    {job.application_link ? (
-                      <a
-                        href={job.application_link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-0.5 block text-xs text-[#E07A5F] underline"
-                      >
-                        Link
-                      </a>
-                    ) : null}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyles[job.status]}`}>
-                      {job.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-xs opacity-80 whitespace-nowrap">{job.applied_date}</td>
-                  <td className="px-4 py-3 text-xs opacity-80 capitalize whitespace-nowrap">{job.work_type || 'remote'}</td>
-                  <td className="px-4 py-3 text-xs whitespace-nowrap">
-                    {job.interview_date ? (
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${getWeekdayChipStyle(job.interview_date)}`}>
-                        {formatInterviewDateTime(job.interview_date)}
-                      </span>
-                    ) : (
-                      <span className="opacity-50">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-xs opacity-80 whitespace-nowrap">{job.location || '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {jobs.length === 0 ? (
-          <div className={`mt-4 rounded-2xl border p-4 text-sm ${theme.innerCard}`}>
-            No applications found. Use "Import CSV" or "Add New Application" on the Dashboard.
-          </div>
-        ) : null}
       </section>
+
+      {/* Table Section: Not Archived */}
+      {(archiveFilter === 'all' || archiveFilter === 'active') && (
+        <section className={`rounded-[28px] sm:rounded-[32px] border p-4 sm:p-6 shadow-md transition-all ${theme.card}`}>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Not Archived</h3>
+            <span className="text-xs opacity-70">{notArchivedJobs.length} item(s)</span>
+          </div>
+
+          <div className="mt-4 overflow-x-auto rounded-2xl border border-transparent [-webkit-overflow-scrolling:touch]">
+            <table className="w-full text-left text-sm min-w-[760px]">
+              <thead>
+                <tr className={`border-b ${theme.tableHeader}`}>
+                  <th className="px-4 py-3 font-semibold">Company</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap">Applied</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap">Interview</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap">Salary</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap">Location</th>
+                  <th className="px-4 py-3 text-right font-semibold whitespace-nowrap">Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {notArchivedJobs.map((job) => (
+                  <Fragment key={job.id}>
+                    <tr className={`border-b ${theme.tableRow}`}>
+                      <td className="px-4 py-3.5 font-semibold">
+                        {job.company_name}
+                        {job.application_link && (
+                          <a
+                            href={job.application_link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-0.5 block text-xs text-[#E07A5F] underline font-normal"
+                          >
+                            Link
+                          </a>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider ${statusStyles[job.status]}`}>
+                          {job.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 text-xs opacity-80 whitespace-nowrap">{job.applied_date}</td>
+                      <td className="px-4 py-3.5 text-xs whitespace-nowrap">
+                        {job.interview_date ? (
+                          <div>
+                            <div>{formatInterviewDateTime(job.interview_date)}</div>
+                            <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${getWeekdayChipStyle(job.interview_date)}`}>
+                              {new Date(job.interview_date).toLocaleDateString('en-US', { weekday: 'short' })}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="opacity-50">No interview date</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5 text-xs whitespace-nowrap opacity-80">
+                        {formatSalary(job.salary_value, job.salary_unit, job.salary_currency) || '—'}
+                      </td>
+                      <td className="px-4 py-3.5 text-xs whitespace-nowrap opacity-80">{job.location || '—'}</td>
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => toggleNoteDetails(job.id)}
+                          className={`rounded-xl border ${buttonStyle} font-semibold transition ${theme.innerCard}`}
+                        >
+                          {expandedNotes[job.id] ? 'Hide Details' : 'Show Details'}
+                        </button>
+                      </td>
+                    </tr>
+
+                    {expandedNotes[job.id] && (
+                      <tr className={theme.tableRow}>
+                        <td colSpan={7} className={`px-4 py-3 text-xs ${theme.input}`}>
+                          <div className="space-y-1">
+                            <span className="font-bold opacity-75">Notes: </span>
+                            <span>{job.notes || 'No extra notes recorded.'}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {notArchivedJobs.length === 0 && (
+            <div className={`mt-4 rounded-2xl border p-4 text-sm ${theme.innerCard}`}>
+              No active applications match your filter selections.
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Table Section: Archived */}
+      {(archiveFilter === 'all' || archiveFilter === 'archived') && (
+        <section className={`rounded-[28px] sm:rounded-[32px] border p-4 sm:p-6 shadow-md transition-all ${theme.card}`}>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Archived</h3>
+            <span className="text-xs opacity-70">{archivedJobs.length} item(s)</span>
+          </div>
+
+          <div className="mt-4 overflow-x-auto rounded-2xl border border-transparent [-webkit-overflow-scrolling:touch]">
+            <table className="w-full text-left text-sm min-w-[760px]">
+              <thead>
+                <tr className={`border-b ${theme.tableHeader}`}>
+                  <th className="px-4 py-3 font-semibold">Company</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap">Applied</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap">Interview</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap">Salary</th>
+                  <th className="px-4 py-3 font-semibold whitespace-nowrap">Location</th>
+                  <th className="px-4 py-3 text-right font-semibold whitespace-nowrap">Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {archivedJobs.map((job) => (
+                  <Fragment key={job.id}>
+                    <tr className={`border-b ${theme.tableRow}`}>
+                      <td className="px-4 py-3.5 font-semibold">{job.company_name}</td>
+                      <td className="px-4 py-3.5">
+                        <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider ${statusStyles[job.status]}`}>
+                          {job.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 text-xs opacity-80 whitespace-nowrap">{job.applied_date}</td>
+                      <td className="px-4 py-3.5 text-xs whitespace-nowrap">
+                        {job.interview_date ? (
+                          <div>
+                            <div>{formatInterviewDateTime(job.interview_date)}</div>
+                            <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${getWeekdayChipStyle(job.interview_date)}`}>
+                              {new Date(job.interview_date).toLocaleDateString('en-US', { weekday: 'short' })}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="opacity-50">No interview date</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5 text-xs whitespace-nowrap opacity-80">
+                        {formatSalary(job.salary_value, job.salary_unit, job.salary_currency) || '—'}
+                      </td>
+                      <td className="px-4 py-3.5 text-xs whitespace-nowrap opacity-80">{job.location || '—'}</td>
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => toggleNoteDetails(job.id)}
+                          className={`rounded-xl border ${buttonStyle} font-semibold transition ${theme.innerCard}`}
+                        >
+                          {expandedNotes[job.id] ? 'Hide Details' : 'Show Details'}
+                        </button>
+                      </td>
+                    </tr>
+
+                    {expandedNotes[job.id] && (
+                      <tr className={theme.tableRow}>
+                        <td colSpan={7} className={`px-4 py-3 text-xs ${theme.input}`}>
+                          <div className="space-y-1">
+                            <span className="font-bold opacity-75">Notes: </span>
+                            <span>{job.notes || 'No extra notes recorded.'}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {archivedJobs.length === 0 && (
+            <div className={`mt-4 rounded-2xl border p-4 text-sm ${theme.innerCard}`}>
+              No archived applications match your filter selections.
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }
