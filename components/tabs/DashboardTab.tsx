@@ -2,7 +2,6 @@
 
 import { Fragment, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
-import Image from 'next/image';
 import type {
   DashboardSortOption,
   FormState,
@@ -55,6 +54,52 @@ const workTypeBadgesDark: Record<WorkType, { label: string; style: string }> = {
   hybrid: { label: 'Hybrid', style: 'bg-[#332b1c] text-[#e0c17d]' },
   onsite: { label: 'Onsite', style: 'bg-[#1c2733] text-[#7dabe0]' },
 };
+
+function BlossomIcon({ darkMode }: { darkMode: boolean }) {
+  const petalFill = darkMode ? '#F4727C' : '#FFB5C5';
+  const petalStroke = darkMode ? '#9A2B35' : '#D6657A';
+  const stamenColor = darkMode ? '#7F1D24' : '#C4884D';
+  const centerColor = darkMode ? '#A3343E' : '#F9D1A2';
+
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      className="h-6 w-6 shrink-0"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <g id="petal">
+          <path
+            d="M 50 50 C 40 38 32 24 38 12 C 43 2 48 10 50 14 C 52 10 57 2 62 12 C 68 24 60 38 50 50 Z"
+            fill={petalFill}
+            stroke={petalStroke}
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+          />
+          <path d="M 50 34 L 50 20" stroke={petalStroke} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+        </g>
+      </defs>
+
+      <g>
+        <use href="#petal" />
+        <use href="#petal" transform="rotate(72 50 50)" />
+        <use href="#petal" transform="rotate(144 50 50)" />
+        <use href="#petal" transform="rotate(216 50 50)" />
+        <use href="#petal" transform="rotate(288 50 50)" />
+      </g>
+
+      {[0, 36, 72, 108, 144, 180, 216, 252, 288, 324].map((deg) => (
+        <g key={deg} transform={`rotate(${deg} 50 50)`}>
+          <line x1="50" y1="50" x2="50" y2="29" stroke={stamenColor} strokeWidth="1.8" strokeLinecap="round" />
+          <circle cx="50" cy="28" r="2.2" fill={stamenColor} />
+        </g>
+      ))}
+
+      <circle cx="50" cy="50" r="6.5" fill={centerColor} stroke={stamenColor} strokeWidth="1.5" />
+    </svg>
+  );
+}
 
 export default function DashboardTab({
   theme,
@@ -294,20 +339,14 @@ export default function DashboardTab({
               <button
                 type="submit"
                 disabled={submitting}
-                className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl py-2 px-5 h-[40px] text-sm font-semibold shadow-sm transition-all duration-150 hover:opacity-95 active:scale-[0.99] disabled:opacity-50 ${
+                className={`inline-flex w-full items-center justify-center gap-2.5 rounded-2xl h-[40px] px-5 text-sm font-semibold shadow-sm transition-all duration-150 hover:opacity-95 active:scale-[0.99] disabled:opacity-50 ${
                   darkMode
                     ? 'bg-[#352528] text-[#fca5a5] border border-[#f87171]/40 hover:bg-[#402d31]'
                     : 'bg-[#FFE2DE] text-[#7A2C3B] border border-[#FFCCD3] hover:bg-[#FFD9D3]'
                 }`}
               >
                 <span>{submitting ? 'Saving...' : editingJobId ? 'Save Changes' : 'Add Application'}</span>
-                <Image
-                  src={darkMode ? '/Save_DarkMode.png' : '/Save.png'}
-                  alt="Save icon"
-                  width={28}
-                  height={28}
-                  className="h-7 w-7 object-contain shrink-0"
-                />
+                <BlossomIcon darkMode={darkMode} />
               </button>
               {editingJobId ? (
                 <button
