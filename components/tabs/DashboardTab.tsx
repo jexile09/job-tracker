@@ -412,9 +412,9 @@ export default function DashboardTab({
                 <th className="px-4 py-3 font-semibold">Company</th>
                 {showSalaryColumn && <th className="hidden px-4 py-3 font-semibold sm:table-cell">Salary</th>}
                 {showLocationColumn && <th className="hidden px-4 py-3 font-semibold md:table-cell">Location</th>}
-                <th className="px-4 py-3 font-semibold">Applied</th>
+                <th className="px-4 py-3 font-semibold whitespace-nowrap">Applied</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="hidden px-4 py-3 font-semibold sm:table-cell">Calendar</th>
+                <th className="hidden px-4 py-3 font-semibold sm:table-cell whitespace-nowrap">Calendar</th>
                 <th className="px-4 py-3 text-right font-semibold">Actions</th>
               </tr>
             </thead>
@@ -466,7 +466,7 @@ export default function DashboardTab({
                           {job.location || '—'}
                         </td>
                       )}
-                      <td className={`px-4 ${rowSpacing} opacity-80`}>{formatAppliedDate(job.applied_date)}</td>
+                      <td className={`px-4 ${rowSpacing} whitespace-nowrap opacity-80`}>{formatAppliedDate(job.applied_date)}</td>
 
                       <td className={`px-4 ${rowSpacing}`}>
                         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[job.status]}`}>
@@ -474,13 +474,13 @@ export default function DashboardTab({
                         </span>
                       </td>
 
-                      <td className={`hidden px-4 ${rowSpacing} sm:table-cell`}>
+                      <td className={`hidden px-4 ${rowSpacing} whitespace-nowrap sm:table-cell`}>
                         {job.interview_date && (
                           <a
                             href={calendarUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className={`rounded-xl px-2.5 py-1 text-xs font-semibold ${
+                            className={`inline-block whitespace-nowrap rounded-xl px-2.5 py-1 text-xs font-semibold ${
                               darkMode ? 'bg-[#18181b] text-[#f87171]' : 'bg-[#EAF4FF] text-[#3B629B]'
                             }`}
                           >
