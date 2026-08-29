@@ -324,7 +324,7 @@ export default function SpreadsheetTab({
             </p>
           </div>
 
-          {/* Action Toolbar with subtle drop-shadow applied to the PNG icons so they pop cleanly */}
+          {/* Action Toolbar without shadow filter on the icons */}
           <div className="flex flex-wrap items-center gap-2.5">
             <input
               type="file"
@@ -351,7 +351,7 @@ export default function SpreadsheetTab({
                 width={18}
                 height={18}
                 unoptimized
-                className="h-4 w-4 object-contain filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]"
+                className="h-4 w-4 object-contain"
               />
             </button>
 
@@ -373,7 +373,7 @@ export default function SpreadsheetTab({
                 width={18}
                 height={18}
                 unoptimized
-                className="h-4 w-4 object-contain filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]"
+                className="h-4 w-4 object-contain"
               />
             </button>
 
@@ -394,7 +394,7 @@ export default function SpreadsheetTab({
                 width={18}
                 height={18}
                 unoptimized
-                className="h-4 w-4 object-contain filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]"
+                className="h-4 w-4 object-contain"
               />
             </button>
           </div>
