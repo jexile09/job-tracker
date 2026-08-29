@@ -1,10 +1,12 @@
 'use client';
 
 import { Fragment, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
 import { supabase } from '../../lib/supabaseClient';
 import type { JobRecord, JobStatus, SalaryCurrency, ThemeStyles, WorkType } from '../../types';
 import { formatSalary } from '../../lib/salary';
 
+/* TypeScript interface defining all data and callback props accepted by the spreadsheet tab view */
 type SpreadsheetTabProps = {
   jobs: JobRecord[];
   theme: ThemeStyles;
@@ -16,7 +18,7 @@ type SpreadsheetTabProps = {
   onRefresh?: () => void;
 };
 
-// Column headers expected when building or reading spreadsheet CSV files.
+/* Standard column names used when exporting records or generating blank import files */
 const CSV_HEADERS = [
   'Company Name',
   'Application Link',
@@ -32,8 +34,7 @@ const CSV_HEADERS = [
   'Notes',
 ];
 
-// Handles CSV formatting rules: wraps text in double quotes if it contains commas,
-// newlines, or quotes, and escapes internal quotes with double-quotes.
+/* Helper function that wraps CSV cell values in quotation marks if they contain commas, newlines, or quotes */
 const escapeCsvValue = (val: unknown): string => {
   if (val === null || val === undefined) return '';
   const str = String(val);
@@ -43,8 +44,7 @@ const escapeCsvValue = (val: unknown): string => {
   return str;
 };
 
-// Custom parser that splits raw CSV text into a 2D array while correctly preserving
-// commas and line breaks that live inside double-quoted text blocks.
+/* Custom text parser that breaks raw CSV files into individual rows and columns while respecting quoted blocks */
 const parseCsvRows = (text: string): string[][] => {
   const rows: string[][] = [];
   let currentRow: string[] = [];
@@ -96,7 +96,7 @@ const parseCsvRows = (text: string): string[][] => {
   return rows;
 };
 
-// Reusable SVG dropdown arrow to maintain consistent select input styling across themes.
+/* Reusable SVG dropdown arrow icon for select input fields */
 function DropdownChevron() {
   return (
     <svg
@@ -124,16 +124,16 @@ export default function SpreadsheetTab({
   userId,
   onRefresh,
 }: SpreadsheetTabProps) {
+  /* References and states for file input handling, loading status, and search filters */
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Search and filter controls
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [archiveFilter, setArchiveFilter] = useState<'all' | 'active' | 'archived'>('all');
 
-  // Tracks which specific rows have their note details expanded
+  /* Dictionary holding boolean expansion states for row notes drawers */
   const [expandedNotes, setExpandedNotes] = useState<Record<number, boolean>>({});
 
   const toggleNoteDetails = (id: number) => {
@@ -146,8 +146,7 @@ export default function SpreadsheetTab({
     setArchiveFilter('all');
   };
 
-  // Generates and triggers a browser download for a sample CSV with dummy data
-  // so the user knows what format the import system expects.
+  /* Generates and triggers download for a clean template CSV file */
   const handleDownloadTemplate = () => {
     const exampleRow = [
       'Example Tech',
@@ -176,7 +175,7 @@ export default function SpreadsheetTab({
     URL.revokeObjectURL(url);
   };
 
-  // Exports the currently filtered jobs list into a downloadable CSV file.
+  /* Exports the currently filtered rows into a downloadable CSV file */
   const handleExportFilteredCsv = () => {
     if (filteredJobs.length === 0) {
       setFeedback({ type: 'error', text: 'No matching jobs to export with current filters.' });
@@ -210,8 +209,7 @@ export default function SpreadsheetTab({
     URL.revokeObjectURL(url);
   };
 
-  // Reads a selected CSV file, validates its fields against allowed database values,
-  // and bulk inserts the rows into Supabase.
+  /* Reads an uploaded CSV file, validates rows, and bulk inserts records into Supabase */
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -232,7 +230,6 @@ export default function SpreadsheetTab({
         throw new Error('The uploaded CSV is empty or missing data rows.');
       }
 
-      // First row contains the headers, so we skip index 0
       const dataRows = rows.slice(1);
       const today = new Date().toISOString().split('T')[0];
 
@@ -248,7 +245,6 @@ export default function SpreadsheetTab({
           const rawWorkType = row[9]?.toLowerCase().trim() as WorkType;
           const work_type: WorkType = validWorkTypes.includes(rawWorkType) ? rawWorkType : 'remote';
 
-          // Strips out dollar signs, commas, or letters so we only store pure numeric values in SQL
           const rawSalaryVal = row[6]?.replace(/[^0-9.]/g, '');
           const salary_value = rawSalaryVal && !Number.isNaN(Number(rawSalaryVal)) ? Number(rawSalaryVal) : null;
 
@@ -291,19 +287,15 @@ export default function SpreadsheetTab({
     }
   };
 
-  // Filters the entire job collection based on search text, status, and archive state
+  /* Filters the jobs collection based on search query, status, and archive state */
   const filteredJobs = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
 
     return jobs.filter((job) => {
-      // Archive filter check
       if (archiveFilter === 'active' && job.is_archived) return false;
       if (archiveFilter === 'archived' && !job.is_archived) return false;
-
-      // Status dropdown check
       if (selectedStatus !== 'all' && job.status !== selectedStatus) return false;
 
-      // Text query match against company, location, or notes
       if (q) {
         const matchCompany = job.company_name.toLowerCase().includes(q);
         const matchLocation = (job.location || '').toLowerCase().includes(q);
@@ -315,7 +307,6 @@ export default function SpreadsheetTab({
     });
   }, [jobs, searchQuery, selectedStatus, archiveFilter]);
 
-  // Splits the filtered list into active and archived buckets for the table sections
   const notArchivedJobs = useMemo(() => filteredJobs.filter((j) => !j.is_archived), [filteredJobs]);
   const archivedJobs = useMemo(() => filteredJobs.filter((j) => j.is_archived), [filteredJobs]);
 
@@ -333,7 +324,7 @@ export default function SpreadsheetTab({
             </p>
           </div>
 
-          {/* Action Toolbar with Template, Import, and Export Buttons */}
+          {/* Action Toolbar with custom PNG icons and correct "Export CSV" labeling */}
           <div className="flex flex-wrap items-center gap-2.5">
             <input
               type="file"
@@ -343,35 +334,60 @@ export default function SpreadsheetTab({
               className="hidden"
             />
 
+            {/* Download Template Button */}
             <button
               type="button"
               onClick={handleDownloadTemplate}
-              className={`inline-flex items-center gap-1.5 rounded-2xl border px-4 py-2.5 text-xs sm:text-sm font-semibold shadow-sm transition hover:opacity-90 ${theme.innerCard}`}
+              className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-xs sm:text-sm font-semibold shadow-sm transition hover:opacity-90 ${theme.innerCard}`}
             >
               <span>Download Template</span>
-              <span aria-hidden="true">📋</span>
+              <Image
+                src={darkMode ? '/Template_DarkMode.png' : '/Template.png'}
+                alt="Template Icon"
+                width={18}
+                height={18}
+                unoptimized
+                className="h-4 w-4 object-contain"
+              />
             </button>
 
+            {/* Import CSV Button */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={importing}
-              className={`inline-flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50 ${
+              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50 ${
                 darkMode ? 'bg-[#FA6E6E] hover:bg-[#f85c5c]' : 'bg-[#FFAAA6] hover:bg-[#ff9e9a]'
               }`}
             >
               <span>{importing ? 'Importing…' : 'Import CSV'}</span>
-              <span aria-hidden="true">📥</span>
+              <Image
+                src={darkMode ? '/Import_DarkMode.png' : '/Import.png'}
+                alt="Import Icon"
+                width={18}
+                height={18}
+                unoptimized
+                className="h-4 w-4 object-contain"
+              />
             </button>
 
+            {/* Export CSV Button */}
             <button
               type="button"
               onClick={handleExportFilteredCsv}
-              className={`inline-flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.99] ${
+              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.99] ${
                 darkMode ? 'bg-[#FA6E6E] hover:bg-[#f85c5c]' : 'bg-[#FFAAA6] hover:bg-[#ff9e9a]'
               }`}
             >
-              <span>Download CSV</span>
+              <span>Export CSV</span>
+              <Image
+                src={darkMode ? '/Export_DarkMode.png' : '/Export.png'}
+                alt="Export Icon"
+                width={18}
+                height={18}
+                unoptimized
+                className="h-4 w-4 object-contain"
+              />
             </button>
           </div>
         </div>
@@ -439,7 +455,7 @@ export default function SpreadsheetTab({
           </div>
         </div>
 
-        {/* Upload Alert */}
+        {/* Upload Alert Feedback */}
         {feedback && (
           <div
             className={`mt-4 rounded-2xl border px-4 py-2.5 text-xs ${
