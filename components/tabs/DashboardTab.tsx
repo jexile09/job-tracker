@@ -13,6 +13,7 @@ import type {
 } from '../../types';
 import { currencySymbols, formatSalary } from '../../lib/salary';
 
+/* TypeScript interface defining all incoming component properties, data records, and callback handlers */
 type DashboardTabProps = {
   theme: ThemeStyles;
   darkMode: boolean;
@@ -43,19 +44,41 @@ type DashboardTabProps = {
   onCancelEdit: () => void;
 };
 
+/* Color palette dictionary for work environment badges when operating in light mode */
 const workTypeBadgesLight: Record<WorkType, { label: string; style: string }> = {
   remote: { label: 'Remote', style: 'bg-[#E8F8EC] text-[#3B6D3D]' },
   hybrid: { label: 'Hybrid', style: 'bg-[#FFF3CF] text-[#8C6418]' },
   onsite: { label: 'Onsite', style: 'bg-[#EAF4FF] text-[#3B629B]' },
 };
 
+/* Color palette dictionary for work environment badges when operating in dark mode */
 const workTypeBadgesDark: Record<WorkType, { label: string; style: string }> = {
   remote: { label: 'Remote', style: 'bg-[#1c3321] text-[#7de0a0]' },
   hybrid: { label: 'Hybrid', style: 'bg-[#332b1c] text-[#e0c17d]' },
   onsite: { label: 'Onsite', style: 'bg-[#1c2733] text-[#7dabe0]' },
 };
 
+/* Reusable vector chevron icon rendered inside relative select wrappers with absolute positioning */
+function DropdownChevron() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      aria-hidden="true"
+      className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 opacity-60"
+    >
+      <path
+        fillRule="evenodd"
+        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
+/* Vector blossom icon generated mathematically via SVG to prevent downscaling blur */
 function BlossomIcon({ darkMode }: { darkMode: boolean }) {
+  /* Dynamic color variables mapped according to active theme mode */
   const petalFill = darkMode ? '#F4727C' : '#FFB5C5';
   const petalStroke = darkMode ? '#9A2B35' : '#D6657A';
   const stamenColor = darkMode ? '#7F1D24' : '#C4884D';
@@ -69,6 +92,7 @@ function BlossomIcon({ darkMode }: { darkMode: boolean }) {
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
+        {/* Reusable base petal geometry defined with cubic Bezier curve paths */}
         <g id="petal">
           <path
             d="M 50 50 C 40 38 32 24 38 12 C 43 2 48 10 50 14 C 52 10 57 2 62 12 C 68 24 60 38 50 50 Z"
@@ -81,6 +105,7 @@ function BlossomIcon({ darkMode }: { darkMode: boolean }) {
         </g>
       </defs>
 
+      {/* Five-fold radial repetition of the base petal at 72 degree steps */}
       <g>
         <use href="#petal" />
         <use href="#petal" transform="rotate(72 50 50)" />
@@ -89,6 +114,7 @@ function BlossomIcon({ darkMode }: { darkMode: boolean }) {
         <use href="#petal" transform="rotate(288 50 50)" />
       </g>
 
+      {/* Ten stamen stems generated mathematically across 36 degree intervals */}
       {[0, 36, 72, 108, 144, 180, 216, 252, 288, 324].map((deg) => (
         <g key={deg} transform={`rotate(${deg} 50 50)`}>
           <line x1="50" y1="50" x2="50" y2="29" stroke={stamenColor} strokeWidth="1.8" strokeLinecap="round" />
@@ -96,11 +122,13 @@ function BlossomIcon({ darkMode }: { darkMode: boolean }) {
         </g>
       ))}
 
+      {/* Center pistil node */}
       <circle cx="50" cy="50" r="6.5" fill={centerColor} stroke={stamenColor} strokeWidth="1.5" />
     </svg>
   );
 }
 
+/* Primary functional component rendering the application tracker creation form and dynamic data table */
 export default function DashboardTab({
   theme,
   darkMode,
@@ -130,32 +158,39 @@ export default function DashboardTab({
   showSalaryColumn,
   showLocationColumn,
 }: DashboardTabProps) {
+  /* State dictionary tracking which table row identifiers possess open detail drawers */
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
 
+  /* Adaptive styling variables calculated from interface themes and user display settings */
   const workTypeBadges = darkMode ? workTypeBadgesDark : workTypeBadgesLight;
   const buttonStyle = compactMode ? 'text-[11px] px-2.5 py-1' : 'text-xs px-3 py-1.5';
   const rowSpacing = compactMode ? 'py-2' : 'py-3.5';
   const formTitle = editingJobId ? 'Edit Application' : 'Add New Application';
   const selectedCurrency: SalaryCurrency = form.salary_currency || 'USD';
 
+  /* Toggle handler altering row expansion state for specific job numeric identifiers */
   const toggleRow = (id: number) => {
     setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  /* Helper evaluation checking whether row drawer details should render open or closed */
   const detailsOpen = (job: JobRecord) => {
     return expandedRows[job.id] ?? !hideDetailsByDefault;
   };
 
+  /* Total table column span calculation including optional dynamic salary and location cells */
   const detailsColSpan = 5 + Number(showSalaryColumn) + Number(showLocationColumn);
 
   return (
+    /* Top-level grid container constrained to a maximum width of 1280px with centered automatic margins */
     <div className="w-full max-w-7xl mx-auto space-y-6">
-      {/* Form Card */}
+      {/* Form Submission Surface Container */}
       <section className={`rounded-[28px] sm:rounded-[32px] border p-4 sm:p-6 lg:p-8 shadow-md transition-all ${theme.card}`}>
         <h2 className="text-2xl sm:text-3xl font-semibold">{formTitle}</h2>
-        
+
+        {/* Input form grid with responsive two-column arrangement at the 1280px breakpoint */}
         <form onSubmit={handleSubmit} className="mt-6 grid gap-5 xl:grid-cols-2">
-          {/* Left Column Fields */}
+          {/* Form Left Column for entity details and compensation */}
           <div className={`space-y-4 rounded-[24px] sm:rounded-[28px] border p-4 sm:p-5 ${theme.innerCard}`}>
             <div>
               <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Company name</label>
@@ -168,7 +203,7 @@ export default function DashboardTab({
                 className={`w-full rounded-2xl border px-3.5 py-2.5 text-sm outline-none transition ${theme.input}`}
               />
             </div>
-            
+
             <div>
               <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Application link</label>
               <input
@@ -191,6 +226,7 @@ export default function DashboardTab({
               />
             </div>
 
+            {/* Compensation Inputs: Single column on small devices expanding to three columns above 640px */}
             <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
               <div>
                 <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Salary</label>
@@ -211,32 +247,40 @@ export default function DashboardTab({
               </div>
               <div>
                 <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Pay type</label>
-                <select
-                  name="salary_unit"
-                  value={form.salary_unit || 'year'}
-                  onChange={handleInputChange}
-                  className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none transition ${theme.input}`}
-                >
-                  <option value="hour">Hourly</option>
-                  <option value="year">Yearly</option>
-                </select>
+                {/* Relative container hosting select input stripped of default browser styling alongside custom inset chevron */}
+                <div className="relative">
+                  <select
+                    name="salary_unit"
+                    value={form.salary_unit || 'year'}
+                    onChange={handleInputChange}
+                    className={`w-full appearance-none rounded-2xl border pl-3 pr-10 py-2 text-xs outline-none transition ${theme.input}`}
+                  >
+                    <option value="hour">Hourly</option>
+                    <option value="year">Yearly</option>
+                  </select>
+                  <DropdownChevron />
+                </div>
               </div>
               <div>
                 <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Currency</label>
-                <select
-                  name="salary_currency"
-                  value={selectedCurrency}
-                  onChange={handleInputChange}
-                  className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none transition ${theme.input}`}
-                >
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="GBP">GBP (£)</option>
-                  <option value="CAD">CAD (C$)</option>
-                  <option value="AUD">AUD (A$)</option>
-                  <option value="INR">INR (Rs)</option>
-                  <option value="JPY">JPY (¥)</option>
-                </select>
+                {/* Relative container hosting currency select input with appearance-none and inset chevron indicator */}
+                <div className="relative">
+                  <select
+                    name="salary_currency"
+                    value={selectedCurrency}
+                    onChange={handleInputChange}
+                    className={`w-full appearance-none rounded-2xl border pl-3 pr-10 py-2 text-xs outline-none transition ${theme.input}`}
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="CAD">CAD (C$)</option>
+                    <option value="AUD">AUD (A$)</option>
+                    <option value="INR">INR (Rs)</option>
+                    <option value="JPY">JPY (¥)</option>
+                  </select>
+                  <DropdownChevron />
+                </div>
               </div>
             </div>
 
@@ -253,37 +297,45 @@ export default function DashboardTab({
             </div>
           </div>
 
-          {/* Right Column Fields */}
+          {/* Form Right Column for schedule timestamps, status dropdowns, and form submission buttons */}
           <div className={`space-y-4 rounded-[24px] sm:rounded-[28px] border p-4 sm:p-5 flex flex-col justify-between ${theme.innerCard}`}>
             <div className="space-y-4">
               <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                 <div>
                   <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Status</label>
-                  <select
-                    name="status"
-                    value={form.status}
-                    onChange={handleInputChange}
-                    className={`w-full rounded-xl border px-2.5 py-2 text-xs outline-none transition ${theme.input}`}
-                  >
-                    <option value="applied">Applied</option>
-                    <option value="interview">Interview</option>
-                    <option value="offered">Offered</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
+                  {/* Relative container stripping default select appearance and rendering custom positioned chevron */}
+                  <div className="relative">
+                    <select
+                      name="status"
+                      value={form.status}
+                      onChange={handleInputChange}
+                      className={`w-full appearance-none rounded-xl border pl-2.5 pr-10 py-2 text-xs outline-none transition ${theme.input}`}
+                    >
+                      <option value="applied">Applied</option>
+                      <option value="interview">Interview</option>
+                      <option value="offered">Offered</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                    <DropdownChevron />
+                  </div>
                 </div>
 
                 <div>
                   <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Work Type</label>
-                  <select
-                    name="work_type"
-                    value={form.work_type}
-                    onChange={handleInputChange}
-                    className={`w-full rounded-xl border px-2.5 py-2 text-xs outline-none transition ${theme.input}`}
-                  >
-                    <option value="remote">Remote</option>
-                    <option value="hybrid">Hybrid</option>
-                    <option value="onsite">Onsite</option>
-                  </select>
+                  {/* Relative container stripping default select appearance and rendering custom positioned chevron */}
+                  <div className="relative">
+                    <select
+                      name="work_type"
+                      value={form.work_type}
+                      onChange={handleInputChange}
+                      className={`w-full appearance-none rounded-xl border pl-2.5 pr-10 py-2 text-xs outline-none transition ${theme.input}`}
+                    >
+                      <option value="remote">Remote</option>
+                      <option value="hybrid">Hybrid</option>
+                      <option value="onsite">Onsite</option>
+                    </select>
+                    <DropdownChevron />
+                  </div>
                 </div>
               </div>
 
@@ -342,6 +394,7 @@ export default function DashboardTab({
               )}
             </div>
 
+            {/* Submit and Cancel Action Controls */}
             <div className="space-y-3 pt-3">
               <button
                 type="submit"
@@ -375,6 +428,7 @@ export default function DashboardTab({
 
       {/* Applications Table Card */}
       <section className={`rounded-[28px] sm:rounded-[32px] border p-4 sm:p-6 shadow-md transition-all ${theme.card}`}>
+        {/* Search and Sort Toolbar */}
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:flex-wrap flex-1">
             <input
@@ -384,35 +438,44 @@ export default function DashboardTab({
               onChange={(e) => setSearchQuery(e.target.value)}
               className={`w-full sm:w-52 lg:w-64 rounded-2xl border px-3.5 py-2 text-sm outline-none transition ${theme.input}`}
             />
-            <select
-              value={selectedFilter}
-              onChange={(e) => setSelectedFilter(e.target.value)}
-              className={`w-full sm:w-36 rounded-2xl border px-3 py-2 text-sm outline-none transition ${theme.input}`}
-            >
-              <option value="all">All statuses</option>
-              <option value="applied">Applied</option>
-              <option value="interview">Interview</option>
-              <option value="offered">Offered</option>
-              <option value="rejected">Rejected</option>
-            </select>
-            <select
-              value={dashboardSort}
-              onChange={(e) => setDashboardSort(e.target.value as DashboardSortOption)}
-              className={`w-full sm:w-48 lg:w-56 rounded-2xl border px-3 py-2 text-sm outline-none transition ${theme.input}`}
-            >
-              <option value="salary_desc">Salary: High to Low</option>
-              <option value="salary_asc">Salary: Low to High</option>
-              <option value="location_asc">Location: A to Z</option>
-              <option value="location_desc">Location: Z to A</option>
-              <option value="name_asc">Name: A to Z</option>
-              <option value="name_desc">Name: Z to A</option>
-              <option value="applied_desc">Applied: Newest</option>
-              <option value="applied_asc">Applied: Oldest</option>
-            </select>
+            {/* Filter select input hosted inside relative container with appearance-none and inset chevron */}
+            <div className="relative w-full sm:w-36">
+              <select
+                value={selectedFilter}
+                onChange={(e) => setSelectedFilter(e.target.value)}
+                className={`w-full appearance-none rounded-2xl border pl-3 pr-10 py-2 text-sm outline-none transition ${theme.input}`}
+              >
+                <option value="all">All statuses</option>
+                <option value="applied">Applied</option>
+                <option value="interview">Interview</option>
+                <option value="offered">Offered</option>
+                <option value="rejected">Rejected</option>
+              </select>
+              <DropdownChevron />
+            </div>
+            {/* Sort select input hosted inside relative container with appearance-none and inset chevron */}
+            <div className="relative w-full sm:w-48 lg:w-56">
+              <select
+                value={dashboardSort}
+                onChange={(e) => setDashboardSort(e.target.value as DashboardSortOption)}
+                className={`w-full appearance-none rounded-2xl border pl-3 pr-10 py-2 text-sm outline-none transition ${theme.input}`}
+              >
+                <option value="salary_desc">Salary: High to Low</option>
+                <option value="salary_asc">Salary: Low to High</option>
+                <option value="location_asc">Location: A to Z</option>
+                <option value="location_desc">Location: Z to A</option>
+                <option value="name_asc">Name: A to Z</option>
+                <option value="name_desc">Name: Z to A</option>
+                <option value="applied_desc">Applied: Newest</option>
+                <option value="applied_asc">Applied: Oldest</option>
+              </select>
+              <DropdownChevron />
+            </div>
           </div>
           <div className="hidden text-xs text-[#8D6F6F] xl:block shrink-0">Row actions stay horizontal for easy scanning.</div>
         </div>
 
+        {/* Scrollable table container with touch momentum enabled */}
         <div className="overflow-x-auto rounded-2xl border border-transparent [-webkit-overflow-scrolling:touch]">
           <table className="w-full text-left text-sm min-w-[640px]">
             <thead>
@@ -423,7 +486,8 @@ export default function DashboardTab({
                 <th className="px-4 py-3 font-semibold whitespace-nowrap">Applied</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
                 <th className="hidden px-4 py-3 font-semibold sm:table-cell whitespace-nowrap">Calendar</th>
-                <th className="px-4 py-3 text-right font-semibold whitespace-nowrap">Actions</th>
+                {/* Actions column header centered horizontally above row button controls */}
+                <th className="px-4 py-3 text-center font-semibold whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -497,8 +561,9 @@ export default function DashboardTab({
                         )}
                       </td>
 
-                      <td className={`px-4 ${rowSpacing} text-right whitespace-nowrap`}>
-                        <div className="inline-flex flex-row items-center justify-end gap-1.5 flex-nowrap">
+                      {/* Row Actions Section centered horizontally underneath the Actions column header */}
+                      <td className={`px-4 ${rowSpacing} text-center whitespace-nowrap`}>
+                        <div className="inline-flex flex-row items-center justify-center gap-1.5 flex-nowrap">
                           <button
                             type="button"
                             onClick={() => toggleRow(job.id)}
@@ -513,10 +578,15 @@ export default function DashboardTab({
                           >
                             Edit
                           </button>
+                          {/* Archive button styled with theme-adaptive coral in dark mode and blossom pink in light mode */}
                           <button
                             type="button"
                             onClick={() => handleToggleArchive(job.id, true)}
-                            className={`rounded-xl border ${buttonStyle} font-semibold transition ${theme.input}`}
+                            className={`rounded-xl border ${buttonStyle} font-semibold transition ${
+                              darkMode
+                                ? 'border-[#f87171]/40 bg-[#352528] text-[#fca5a5] hover:bg-[#402d31]'
+                                : 'border-[#FFCCD3] bg-[#FFE2DE] text-[#7A2C3B] hover:bg-[#FFD9D3]'
+                            }`}
                           >
                             Archive
                           </button>
@@ -534,6 +604,8 @@ export default function DashboardTab({
                         </div>
                       </td>
                     </tr>
+
+                    {/* Expandable Details Drawer */}
                     {detailsOpen(job) && (
                       <tr className={`${theme.tableRow}`}>
                         <td colSpan={detailsColSpan} className={`px-4 ${rowSpacing} ${theme.input}`}>
@@ -576,6 +648,7 @@ export default function DashboardTab({
           </table>
         </div>
 
+        {/* Empty State Display */}
         {filteredJobs.length === 0 ? (
           <div className={`mt-4 rounded-2xl border p-4 text-sm ${theme.innerCard}`}>
             No applications match your current search, filter, and sort choices.

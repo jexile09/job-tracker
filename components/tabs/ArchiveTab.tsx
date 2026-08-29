@@ -40,7 +40,7 @@ function BlossomIcon({ darkMode }: { darkMode: boolean }) {
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        {/* Reusable base petal geometry defined with cubic Bézier curve paths */}
+        {/* Reusable base petal geometry defined with cubic Bezier curve paths */}
         <g id="archivePetal">
           <path
             d="M 50 50 C 40 38 32 24 38 12 C 43 2 48 10 50 14 C 52 10 57 2 62 12 C 68 24 60 38 50 50 Z"
@@ -133,14 +133,14 @@ export default function ArchiveTab({
             </div>
           </div>
 
-          {/* Interactive button element triggering modal visibility state upon click events */}
+          {/* Auto-archive trigger button styled with theme-adaptive coral in dark mode and blossom pink in light mode */}
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-xs sm:text-sm font-semibold transition whitespace-nowrap ${
+            className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-xs sm:text-sm font-semibold transition whitespace-nowrap shadow-sm hover:opacity-95 active:scale-[0.99] ${
               darkMode
-                ? 'border-[#3f3f46] bg-[#1c1d22] text-[#a1a1aa] hover:bg-[#18181b]'
-                : 'border-[#FFE5E2] bg-[#FFFDF9] text-[#6C5656] hover:bg-[#FFE5E2]'
+                ? 'border-[#f87171]/40 bg-[#352528] text-[#fca5a5] hover:bg-[#402d31]'
+                : 'border-[#FFCCD3] bg-[#FFE2DE] text-[#7A2C3B] hover:bg-[#FFD9D3]'
             }`}
           >
             <span>Auto-Archive Rules</span>
@@ -156,7 +156,8 @@ export default function ArchiveTab({
               <tr className={`border-b ${theme.tableHeader}`}>
                 <th className="px-4 py-3 font-semibold">Company</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 text-right font-semibold whitespace-nowrap">Actions</th>
+                {/* Actions column header centered horizontally over restore buttons */}
+                <th className="px-4 py-3 text-center font-semibold whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             {/* Semantic table body mapping the filtered job records collection into table row elements */}
@@ -170,12 +171,17 @@ export default function ArchiveTab({
                       {job.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                    {/* Restoration button executing status mutations with inline theme-adaptive SVG blossom icon */}
+                  {/* Action cell centered horizontally aligning with header text */}
+                  <td className="px-4 py-3.5 text-center whitespace-nowrap">
+                    {/* Restoration button styled with matching coral dark mode and blossom pink light mode colors */}
                     <button
                       type="button"
                       onClick={() => handleToggleArchive(job.id, false)}
-                      className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-xs font-semibold transition ${theme.input}`}
+                      className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-xs font-semibold shadow-sm transition hover:opacity-95 active:scale-[0.99] ${
+                        darkMode
+                          ? 'border-[#f87171]/40 bg-[#352528] text-[#fca5a5] hover:bg-[#402d31]'
+                          : 'border-[#FFCCD3] bg-[#FFE2DE] text-[#7A2C3B] hover:bg-[#FFD9D3]'
+                      }`}
                     >
                       <span>Restore</span>
                       <BlossomIcon darkMode={darkMode} />
