@@ -63,18 +63,18 @@ export default function ArchiveTab({
       <section className={`rounded-[28px] sm:rounded-[32px] border p-4 sm:p-6 lg:p-8 shadow-md transition-all ${theme.card}`}>
         {/* Header layout: vertical stacking on mobile viewports and horizontal alignment on small screens */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3.5">
             <h2 className="text-2xl sm:text-3xl font-semibold">Archived Applications</h2>
-            {/* Enlarged image container scaled to 48px by 48px for increased visibility */}
-            <div className="relative flex items-center justify-center h-11 w-11 sm:h-12 sm:w-12 shrink-0">
+            {/* Enlarged image container scaled to 64px by 64px for prominent display */}
+            <div className="relative flex items-center justify-center h-14 w-14 sm:h-16 sm:w-16 shrink-0">
               <Image
                 src={darkMode ? '/Archive_DarkMode.png' : '/Archive.png'}
                 alt="Blossom Archive Box"
-                width={56}
-                height={56}
+                width={80}
+                height={80}
                 priority
                 unoptimized
-                className="h-full w-full object-contain drop-shadow-sm"
+                className="h-full w-full object-contain drop-shadow-md"
               />
             </div>
           </div>
