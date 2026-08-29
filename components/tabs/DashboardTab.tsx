@@ -149,11 +149,14 @@ export default function DashboardTab({
   const detailsColSpan = 5 + Number(showSalaryColumn) + Number(showLocationColumn);
 
   return (
-    <>
-      <section className={`rounded-[32px] border p-5 shadow-md sm:p-8 ${theme.card}`}>
-        <h2 className="text-3xl font-semibold">{formTitle}</h2>
-        <form onSubmit={handleSubmit} className="mt-6 grid gap-4 lg:grid-cols-2">
-          <div className={`space-y-4 rounded-[28px] border p-5 ${theme.innerCard}`}>
+    <div className="w-full max-w-7xl mx-auto space-y-6">
+      {/* Form Card */}
+      <section className={`rounded-[28px] sm:rounded-[32px] border p-4 sm:p-6 lg:p-8 shadow-md transition-all ${theme.card}`}>
+        <h2 className="text-2xl sm:text-3xl font-semibold">{formTitle}</h2>
+        
+        <form onSubmit={handleSubmit} className="mt-6 grid gap-5 xl:grid-cols-2">
+          {/* Left Column Fields */}
+          <div className={`space-y-4 rounded-[24px] sm:rounded-[28px] border p-4 sm:p-5 ${theme.innerCard}`}>
             <div>
               <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Company name</label>
               <input
@@ -162,9 +165,10 @@ export default function DashboardTab({
                 onChange={handleInputChange}
                 required
                 placeholder="e.g. Google, Target, Local Studio"
-                className={`w-full rounded-2xl border px-4 py-2.5 text-sm outline-none ${theme.input}`}
+                className={`w-full rounded-2xl border px-3.5 py-2.5 text-sm outline-none transition ${theme.input}`}
               />
             </div>
+            
             <div>
               <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Application link</label>
               <input
@@ -172,7 +176,7 @@ export default function DashboardTab({
                 value={form.application_link}
                 onChange={handleInputChange}
                 placeholder="https://..."
-                className={`w-full rounded-2xl border px-4 py-2.5 text-sm outline-none ${theme.input}`}
+                className={`w-full rounded-2xl border px-3.5 py-2.5 text-sm outline-none transition ${theme.input}`}
               />
             </div>
 
@@ -183,11 +187,11 @@ export default function DashboardTab({
                 value={form.location}
                 onChange={handleInputChange}
                 placeholder="e.g. New York, NY"
-                className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
+                className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none transition ${theme.input}`}
               />
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
               <div>
                 <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Salary</label>
                 <div className="relative">
@@ -201,7 +205,7 @@ export default function DashboardTab({
                     value={form.salary_value ?? ''}
                     onChange={handleInputChange}
                     placeholder="e.g. 25.50 or 85000"
-                    className={`w-full rounded-2xl border pl-9 pr-3 py-2 text-xs outline-none ${theme.input}`}
+                    className={`w-full rounded-2xl border pl-9 pr-3 py-2 text-xs outline-none transition ${theme.input}`}
                   />
                 </div>
               </div>
@@ -211,7 +215,7 @@ export default function DashboardTab({
                   name="salary_unit"
                   value={form.salary_unit || 'year'}
                   onChange={handleInputChange}
-                  className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
+                  className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none transition ${theme.input}`}
                 >
                   <option value="hour">Hourly</option>
                   <option value="year">Yearly</option>
@@ -223,7 +227,7 @@ export default function DashboardTab({
                   name="salary_currency"
                   value={selectedCurrency}
                   onChange={handleInputChange}
-                  className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none ${theme.input}`}
+                  className={`w-full rounded-2xl border px-3 py-2 text-xs outline-none transition ${theme.input}`}
                 >
                   <option value="USD">USD ($)</option>
                   <option value="EUR">EUR (€)</option>
@@ -244,102 +248,105 @@ export default function DashboardTab({
                 onChange={handleInputChange}
                 rows={3}
                 placeholder="Recruiter details, team info, next steps..."
-                className={`w-full rounded-2xl border px-4 py-2.5 text-sm outline-none ${theme.input}`}
+                className={`w-full rounded-2xl border px-3.5 py-2.5 text-sm outline-none transition ${theme.input}`}
               />
             </div>
           </div>
 
-          <div className={`space-y-4 rounded-[28px] border p-5 ${theme.innerCard}`}>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Status</label>
-                <select
-                  name="status"
-                  value={form.status}
-                  onChange={handleInputChange}
-                  className={`w-full rounded-xl border px-2 py-2 text-xs outline-none ${theme.input}`}
-                >
-                  <option value="applied">Applied</option>
-                  <option value="interview">Interview</option>
-                  <option value="offered">Offered</option>
-                  <option value="rejected">Rejected</option>
-                </select>
+          {/* Right Column Fields */}
+          <div className={`space-y-4 rounded-[24px] sm:rounded-[28px] border p-4 sm:p-5 flex flex-col justify-between ${theme.innerCard}`}>
+            <div className="space-y-4">
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+                <div>
+                  <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Status</label>
+                  <select
+                    name="status"
+                    value={form.status}
+                    onChange={handleInputChange}
+                    className={`w-full rounded-xl border px-2.5 py-2 text-xs outline-none transition ${theme.input}`}
+                  >
+                    <option value="applied">Applied</option>
+                    <option value="interview">Interview</option>
+                    <option value="offered">Offered</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Work Type</label>
+                  <select
+                    name="work_type"
+                    value={form.work_type}
+                    onChange={handleInputChange}
+                    className={`w-full rounded-xl border px-2.5 py-2 text-xs outline-none transition ${theme.input}`}
+                  >
+                    <option value="remote">Remote</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="onsite">Onsite</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+                <div>
+                  <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Applied Date</label>
+                  <input
+                    name="applied_date"
+                    type="date"
+                    value={form.applied_date}
+                    onChange={handleInputChange}
+                    className={`w-full rounded-xl border px-2.5 py-2 text-xs outline-none transition ${theme.input}`}
+                  />
+                </div>
+
+                <div>
+                  <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Deadline</label>
+                  <input
+                    name="deadline_date"
+                    type="date"
+                    value={form.deadline_date}
+                    onChange={handleInputChange}
+                    className={`w-full rounded-xl border px-2.5 py-2 text-xs outline-none transition ${theme.input}`}
+                  />
+                </div>
               </div>
 
               <div>
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Work Type</label>
-                <select
-                  name="work_type"
-                  value={form.work_type}
-                  onChange={handleInputChange}
-                  className={`w-full rounded-xl border px-2 py-2 text-xs outline-none ${theme.input}`}
-                >
-                  <option value="remote">Remote</option>
-                  <option value="hybrid">Hybrid</option>
-                  <option value="onsite">Onsite</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Applied Date</label>
+                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Interview Date & Time</label>
                 <input
-                  name="applied_date"
-                  type="date"
-                  value={form.applied_date}
+                  name="interview_date"
+                  type="datetime-local"
+                  value={form.interview_date}
                   onChange={handleInputChange}
-                  className={`w-full rounded-xl border px-2 py-2 text-xs outline-none ${theme.input}`}
+                  className={`w-full rounded-xl border px-3 py-2 text-xs outline-none transition ${theme.input}`}
                 />
+                {form.interview_date ? (
+                  <p className="mt-2 text-xs text-[#8D6F6F]">{formatInterviewDateTime(form.interview_date)}</p>
+                ) : null}
               </div>
 
-              <div>
-                <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Deadline</label>
-                <input
-                  name="deadline_date"
-                  type="date"
-                  value={form.deadline_date}
-                  onChange={handleInputChange}
-                  className={`w-full rounded-xl border px-2 py-2 text-xs outline-none ${theme.input}`}
-                />
-              </div>
+              {message && (
+                <div
+                  className={`rounded-2xl border px-4 py-2 text-xs ${
+                    message.type === 'success'
+                      ? darkMode
+                        ? 'border-[#1c3321] bg-[#18181b] text-[#7de0a0]'
+                        : 'border-[#DDF3E3] bg-[#F3FFF7] text-[#3F6B4C]'
+                      : darkMode
+                      ? 'border-[#331c1c] bg-[#18181b] text-[#f87171]'
+                      : 'border-[#FFE2E2] bg-[#FFF5F5] text-[#A04A4A]'
+                  }`}
+                >
+                  {message.text}
+                </div>
+              )}
             </div>
 
-            <div>
-              <label className={`mb-1 block text-xs font-semibold ${theme.label}`}>Interview Date & Time</label>
-              <input
-                name="interview_date"
-                type="datetime-local"
-                value={form.interview_date}
-                onChange={handleInputChange}
-                className={`w-full rounded-xl border px-3 py-2 text-xs outline-none ${theme.input}`}
-              />
-              {form.interview_date ? (
-                <p className="mt-2 text-xs text-[#8D6F6F]">{formatInterviewDateTime(form.interview_date)}</p>
-              ) : null}
-            </div>
-
-            {message && (
-              <div
-                className={`rounded-2xl border px-4 py-2 text-xs ${
-                  message.type === 'success'
-                    ? darkMode
-                      ? 'border-[#1c3321] bg-[#18181b] text-[#7de0a0]'
-                      : 'border-[#DDF3E3] bg-[#F3FFF7] text-[#3F6B4C]'
-                    : darkMode
-                    ? 'border-[#331c1c] bg-[#18181b] text-[#f87171]'
-                    : 'border-[#FFE2E2] bg-[#FFF5F5] text-[#A04A4A]'
-                }`}
-              >
-                {message.text}
-              </div>
-            )}
-
-            <div className="space-y-3 pt-2">
+            <div className="space-y-3 pt-3">
               <button
                 type="submit"
                 disabled={submitting}
-                className={`inline-flex w-full items-center justify-center gap-2.5 rounded-2xl h-[40px] px-5 text-sm font-semibold shadow-sm transition-all duration-150 hover:opacity-95 active:scale-[0.99] disabled:opacity-50 ${
+                className={`inline-flex w-full items-center justify-center gap-2.5 rounded-2xl h-[42px] px-5 text-sm font-semibold shadow-sm transition-all duration-150 hover:opacity-95 active:scale-[0.99] disabled:opacity-50 ${
                   darkMode
                     ? 'bg-[#352528] text-[#fca5a5] border border-[#f87171]/40 hover:bg-[#402d31]'
                     : 'bg-[#FFE2DE] text-[#7A2C3B] border border-[#FFCCD3] hover:bg-[#FFD9D3]'
@@ -366,20 +373,21 @@ export default function DashboardTab({
         </form>
       </section>
 
-      <section className={`rounded-[32px] border p-5 shadow-md sm:p-6 ${theme.card}`}>
+      {/* Applications Table Card */}
+      <section className={`rounded-[28px] sm:rounded-[32px] border p-4 sm:p-6 shadow-md transition-all ${theme.card}`}>
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:flex-wrap flex-1">
             <input
               type="text"
               placeholder="Search company..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full sm:w-56 rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
+              className={`w-full sm:w-52 lg:w-64 rounded-2xl border px-3.5 py-2 text-sm outline-none transition ${theme.input}`}
             />
             <select
               value={selectedFilter}
               onChange={(e) => setSelectedFilter(e.target.value)}
-              className={`w-full sm:w-40 rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
+              className={`w-full sm:w-36 rounded-2xl border px-3 py-2 text-sm outline-none transition ${theme.input}`}
             >
               <option value="all">All statuses</option>
               <option value="applied">Applied</option>
@@ -390,7 +398,7 @@ export default function DashboardTab({
             <select
               value={dashboardSort}
               onChange={(e) => setDashboardSort(e.target.value as DashboardSortOption)}
-              className={`w-full sm:w-56 rounded-2xl border px-4 py-2 text-sm outline-none ${theme.input}`}
+              className={`w-full sm:w-48 lg:w-56 rounded-2xl border px-3 py-2 text-sm outline-none transition ${theme.input}`}
             >
               <option value="salary_desc">Salary: High to Low</option>
               <option value="salary_asc">Salary: Low to High</option>
@@ -402,20 +410,20 @@ export default function DashboardTab({
               <option value="applied_asc">Applied: Oldest</option>
             </select>
           </div>
-          <div className="hidden text-xs text-[#8D6F6F] lg:block">Row actions stay horizontal for easy scanning.</div>
+          <div className="hidden text-xs text-[#8D6F6F] xl:block shrink-0">Row actions stay horizontal for easy scanning.</div>
         </div>
 
-        <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-2xl border border-transparent [-webkit-overflow-scrolling:touch]">
+          <table className="w-full text-left text-sm min-w-[640px]">
             <thead>
               <tr className={`border-b ${theme.tableHeader}`}>
                 <th className="px-4 py-3 font-semibold">Company</th>
-                {showSalaryColumn && <th className="hidden px-4 py-3 font-semibold sm:table-cell">Salary</th>}
-                {showLocationColumn && <th className="hidden px-4 py-3 font-semibold md:table-cell">Location</th>}
+                {showSalaryColumn && <th className="hidden px-4 py-3 font-semibold md:table-cell whitespace-nowrap">Salary</th>}
+                {showLocationColumn && <th className="hidden px-4 py-3 font-semibold lg:table-cell whitespace-nowrap">Location</th>}
                 <th className="px-4 py-3 font-semibold whitespace-nowrap">Applied</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
                 <th className="hidden px-4 py-3 font-semibold sm:table-cell whitespace-nowrap">Calendar</th>
-                <th className="px-4 py-3 text-right font-semibold">Actions</th>
+                <th className="px-4 py-3 text-right font-semibold whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -454,7 +462,7 @@ export default function DashboardTab({
                       </td>
                       {showSalaryColumn && (
                         <td
-                          className={`hidden px-4 ${rowSpacing} text-xs sm:table-cell ${
+                          className={`hidden px-4 ${rowSpacing} text-xs md:table-cell whitespace-nowrap ${
                             darkMode ? 'text-[#a1a1aa]' : 'text-[#8C6418]'
                           }`}
                         >
@@ -462,7 +470,7 @@ export default function DashboardTab({
                         </td>
                       )}
                       {showLocationColumn && (
-                        <td className={`hidden px-4 ${rowSpacing} text-xs opacity-80 md:table-cell`}>
+                        <td className={`hidden px-4 ${rowSpacing} text-xs opacity-80 lg:table-cell whitespace-nowrap`}>
                           {job.location || '—'}
                         </td>
                       )}
@@ -496,7 +504,7 @@ export default function DashboardTab({
                             onClick={() => toggleRow(job.id)}
                             className={`rounded-xl border ${buttonStyle} font-semibold transition ${theme.input}`}
                           >
-                            {detailsOpen(job) ? 'Hide Details' : 'Show Details'}
+                            {detailsOpen(job) ? 'Hide' : 'Details'}
                           </button>
                           <button
                             type="button"
@@ -529,7 +537,7 @@ export default function DashboardTab({
                     {detailsOpen(job) && (
                       <tr className={`${theme.tableRow}`}>
                         <td colSpan={detailsColSpan} className={`px-4 ${rowSpacing} ${theme.input}`}>
-                          <div className="grid gap-3 md:grid-cols-2">
+                          <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
                             <div className="space-y-1 rounded-2xl border p-3">
                               <p className="text-[11px] uppercase tracking-[0.24em] text-[#8D6F6F]">Interview</p>
                               <p className="text-xs">{formatInterviewDateTime(job.interview_date)}</p>
@@ -574,6 +582,6 @@ export default function DashboardTab({
           </div>
         ) : null}
       </section>
-    </>
+    </div>
   );
 }
